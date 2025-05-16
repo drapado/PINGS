@@ -77,7 +77,7 @@ $ python3 pings.py ./config/run_kitti_gs.yaml kitti 00 -i ./data/kitti_example/ 
 
 @app.command(help=docstring)
 def run_pings(
-    config_path: str = typer.Argument('config/lidar_slam/run.yaml', help='Path to *.yaml config file'),
+    config_path: str = typer.Argument('config/run_pin_slam.yaml', help='Path to *.yaml config file'),
     dataset_name: Optional[str] = typer.Argument(None, help='Name of a specific dataset, example: kitti, oxford, ipbcar or rosbag'),
     sequence_name: Optional[str] = typer.Argument(None, help='Name of a specific data sequence or the rostopic for point cloud'),
     seed: int = typer.Option(42, help='Set the random seed'),
@@ -101,7 +101,6 @@ def run_pings(
     config.seed = seed
     config.silence = not log_on
     config.wandb_vis_on = wandb_on
-    config.gs_on = gs_on
     config.o3d_vis_on = visualize
     config.save_map = save_map
     config.save_mesh = save_mesh
@@ -109,6 +108,8 @@ def run_pings(
     config.deskew = deskew
     if config.track_on:
         config.track_on = tracker_on
+    if config.gs_on:
+        config.gs_on = gs_on
     
     if frame_range:
         config.begin_frame, config.end_frame, config.step_frame = frame_range
@@ -147,7 +148,7 @@ def run_pings(
     sem_mlp = Decoder(config, sem_feature_dim, config.sem_mlp_hidden_dim, config.sem_mlp_level, config.sem_class_count + 1) if config.semantic_on else None
     color_mlp = Decoder(config, color_feature_dim, config.color_mlp_hidden_dim, config.color_mlp_level, config.color_channel) if config.color_on else None
 
-    n_gaussian = config.spawn_n_gaussian # almost 2D, then 4 already means 1/2 resolution
+    n_gaussian = config.spawn_n_gaussian
 
     dist_concat_dim = 1 if config.dist_concat_on else 0
     view_concat_dim = 3 if config.view_concat_on else 0

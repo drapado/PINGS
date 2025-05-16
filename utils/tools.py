@@ -98,7 +98,7 @@ def setup_experiment(config: Config, argv=None, debug_mode: bool = False):
             if len(argv) > 1 and os.path.exists(argv[1]):
                 config_path = argv[1]
             else:
-                config_path = "config/lidar_slam/run.yaml"
+                config_path = "config/run_pin_slam.yaml"
             # copy the config file to the result folder
             shutil.copy2(config_path, run_path)  
 
