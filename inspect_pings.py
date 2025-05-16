@@ -130,10 +130,6 @@ def inspect_pings_map(
     if input_path is not None:
         config.pc_path = input_path
 
-    print("Please provide the path to the result folder.\n\
-            Try: python inspect_pings.py xxx/result/path\
-            [optional: -f center_frame]")
-
     print("[bold green]Load PINGS Map[/bold green]","📍" )
 
     run_path = setup_experiment(config, sys.argv, debug_mode=True)

@@ -21,7 +21,7 @@ neuralpoints:
   feature_dim: 32
   color_feature_dim: 8
 gs:
-  gs_type: gaussian_surfel # 3d_gs, 2d_gs, gaussian_surfel
+  gs_type: gaussian_surfel # select from 3d_gs, gaussian_surfel
   exposure_correction_on: True
   learn_color_residual: True
   cam_pose_train_on: True
