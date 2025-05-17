@@ -14,8 +14,19 @@
 
 ![teaser](https://github.com/user-attachments/assets/0ec8b71d-8902-445c-a07c-f9a7e08fb3e2)
 
+<details>
+  <summary>[Demo videos (click to expand)]</summary>
+
+| SLAM example 1 | SLAM example 2 | Render from Map |
+| :-: | :-: | :-: |
+| <video src='https://github.com/user-attachments/assets/4ecc065f-69d0-4e24-bbf2-d9696b8de402'> | <video src='https://github.com/user-attachments/assets/500b8d54-f2eb-4c9a-ab75-bd271df3de88'> | <video src='https://github.com/user-attachments/assets/c11b2011-a1aa-43b2-8508-e407bb686c27'> |
+
+</details>
+
+----
 
 🚧 **Repo under construction** 🚧
+
 
 ## Abstract
 
@@ -56,7 +67,7 @@ conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=
 The commands depend on your CUDA version (check it by `nvcc --version`). You may check the instructions [here](https://pytorch.org/get-started/previous-versions/).
 
 
-### 3. Install other dependency including the submodules
+### 3. Install other dependencies including the submodules
 
 ```
 pip3 install -r requirements.txt
@@ -98,7 +109,7 @@ If you use PINGS for any academic work, please cite our original [paper](https:/
 author = {Y. Pan and X. Zhong and L. Jin and L. Wiesmann and M. Popovi\'c and J. Behley and C. Stachniss},
 title = {{PINGS: Gaussian Splatting Meets Distance Fields within a Point-Based Implicit Neural Map}},
 booktitle= {Robotics: Science and Systems (RSS)},
-year = 2025,
+year = {2025},
 codeurl = {https://github.com/PRBonn/PINGS},
 url = {https://www.ipb.uni-bonn.de/wp-content/papercite-data/pdf/pan2025rss.pdf}
 }
