@@ -72,8 +72,6 @@ optimizer:
   learning_rate_geo: 2e-3
   learning_rate_color: 2e-3
   learning_rate_exposure: 1e-3
-  learning_rate_cam_dr: 3e-3
-  learning_rate_cam_dt: 1e-3
 eval:
   gs_eval_on: True
   mesh_freq_frame: 10

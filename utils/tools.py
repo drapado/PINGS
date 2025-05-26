@@ -149,7 +149,6 @@ def setup_optimizer(
     mlp_gs_alpha_param=None,
     mlp_gs_color_param=None,
     cams=None,
-    poses=None,
     gs_xyz=None,
     gs_features_dc=None,
     gs_features_rest=None,
@@ -285,10 +284,6 @@ def setup_optimizer(
                 "name": "gs_rotation",
             }
             opt_setting.append(gs_rotation_opt_dict)
-        
-    if poses is not None:
-        poses_opt_dict = {"params": poses, "lr": config.lr_pose, "weight_decay": weight_decay}
-        opt_setting.append(poses_opt_dict)
 
     if cams is not None:
         for cam in cams:

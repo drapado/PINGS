@@ -59,7 +59,7 @@ gs:
   gs_vis_down_rate: 1
   gs_keyframe_accu_dist: 1.0 # unit: m
   lambda_depth: 0.01
-  lambda_opacity: 5e-4 # 1e-3 # increase to have more valid Gaussians
+  lambda_opacity: 2e-4 # 1e-3 # increase to have more valid Gaussians
   lambda_area: 1e-3 # 2e-4
   lambda_normal_depth: 0.01
   consist_shift_count: 0
@@ -73,8 +73,6 @@ optimizer:
   learning_rate_geo: 2e-3
   learning_rate_color: 2e-3
   learning_rate_exposure: 1e-3
-  learning_rate_cam_dr: 3e-3
-  learning_rate_cam_dt: 1e-3
 eval:
   gs_eval_on: True
   sensor_cad_path: ./cad/ipb_car.ply

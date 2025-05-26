@@ -201,11 +201,8 @@ class Config:
         self.lr_mlp_base: float = 0.01
         self.lr_exposure: float = 0.001 # learning rate for camera exposure
         # default not used
-        self.lr_cam_dr: float = 0.0 # 0.003 # learning rate for camera rotation
-        self.lr_cam_dt: float = 0.0 # 0.001 # learning rate for camera translation
-        # deprecated for now
-        self.lr_pose: float = 1e-4 # learning rate for poses during bundle adjustment
-        self.lr_ba_map: float = 0.01 # learning rate for map during bundle adjustment
+        self.lr_cam_dr: float = 0.003 # 0.003 # learning rate for camera rotation
+        self.lr_cam_dt: float = 0.001 # 0.001 # learning rate for camera translation
         
         # for the mlps of the gaussian parameters (not very crucial)
         self.lr_mlp_gs_xyz = 1e-3
@@ -264,13 +261,12 @@ class Config:
         
         self.img_pool_size: int = 10 # #short-term training views
         self.long_term_pool_size: int = 80
-        self.img_test_pool_size: int = 0 # testing views
         self.gs_down_rate: int = 0 # downsampling rate for rendering (0 means no downsampling)
         self.gs_vis_down_rate: int = 0 # for the visualization
 
         # for gaussian spawning, the unit length is the neural point resolution
-        self.displacement_range_ratio: float = 5.0 # 2.0
-        self.max_scale_ratio: float = 5.0 # 2.0
+        self.displacement_range_ratio: float = 2.0 # 5.0
+        self.max_scale_ratio: float = 2.0 # 5.0
         self.unit_scale_ratio: float = 0.5 # 0.5
 
         # disable backface rendering
@@ -697,7 +693,6 @@ class Config:
             self.short_term_train_prob = config_args["gs"].get("short_term_train_prob", self.short_term_train_prob)
             self.long_term_train_down = config_args["gs"].get("long_term_train_down", self.long_term_train_down)
 
-            self.img_test_pool_size = config_args["gs"].get("img_test_pool_size", self.img_test_pool_size)
             self.gs_down_rate = config_args["gs"].get("gs_down_rate", self.gs_down_rate)
             self.gs_vis_down_rate = config_args["gs"].get("gs_vis_down_rate", self.gs_vis_down_rate)
             self.min_visible_neural_point_ratio = config_args["gs"].get("min_visible_neural_point_ratio", self.min_visible_neural_point_ratio)

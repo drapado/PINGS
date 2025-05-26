@@ -137,9 +137,6 @@ class Mapper:
         # long-term memory
         self.cam_long_term_train_pool = []
 
-        self.cam_img_test_pool = []
-        self.test_cam_uid = [] 
-
         self.gs_train_frame_count: int = 0 # only consider the time frame (so if it's a multi-cam system, multi-cam images belong to a single frame)
         self.sdf_train_frame_count: int = 0
 
@@ -687,22 +684,6 @@ class Mapper:
         # also add some testing views (all the others are then testing views), now it's deprecated, we do not do online evaluation
         else:            
             self.nothing_new_count += 1
-
-            if self.config.img_test_pool_size > 0:
-                for cam_name in cur_cam_names:
-                    cur_view_cam: CamImage = self.dataset.cur_cam_img[cam_name]
-                    self.test_cam_uid.append(cur_view_cam.uid)
-
-                if len(self.cam_img_test_pool) > self.config.img_test_pool_size:
-                    self.cam_img_test_pool.pop(0) # pop the oldest cam
-                    
-                cam_name = self.dataset.loader.main_cam_name
-                cur_view_cam: CamImage = self.dataset.cur_cam_img[cam_name]
-                cur_view_cam.train_view = False
-
-                self.cam_img_test_pool.append(cur_view_cam)
-
-                # print(self.cam_short_term_train_pool_id)
 
     # update cam poses after loop pgo 
     def update_poses_cam_pool(self, poses_after_pgo):

@@ -58,9 +58,7 @@ gs:
   gs_iters: 100
   gaussian_bs_ratio: 1.0
   img_pool_size: 40 
-  long_term_img_pool_size: 80
-  long_term_train_down: False
-  short_term_train_prob: 0.5
+  long_term_img_pool_size: 120
   gs_down_rate: 1
   gs_keyframe_accu_dist: 1.0
   inverse_depth_loss: False
@@ -78,8 +76,6 @@ optimizer: # mapper
   learning_rate_geo: 0.002
   learning_rate_color: 0.002
   learning_rate_exposure: 1e-3
-  learning_rate_cam_dr: 1e-3
-  learning_rate_cam_dt: 5e-4
 eval:
   gs_eval_on: False
   mesh_freq_frame: 10 # reconstruct the mesh every x frames

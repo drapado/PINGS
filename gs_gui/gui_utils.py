@@ -388,6 +388,7 @@ class ParamsGUI:
         is_rgbd: bool = False,
         gs_default_on: bool = False,
         local_map_default_on: bool = True,
+        still_view_default_on: bool = True,
         robot_default_on: bool = True,
         neural_point_map_default_on: bool = False,
         mesh_default_on: bool = False,
@@ -406,6 +407,7 @@ class ParamsGUI:
         self.is_rgbd = is_rgbd
         self.gs_default_on = gs_default_on
         self.local_map_default_on = local_map_default_on
+        self.still_view_default_on = still_view_default_on
         self.robot_default_on = robot_default_on
         self.neural_point_map_default_on = neural_point_map_default_on
         self.mesh_default_on = mesh_default_on
@@ -439,7 +441,7 @@ class Frustum:
         eye = cameraeye[0, :]
 
         # base_behind = np.array([[0.0, -2.5, -30.0]]) * self.size # original z -30.0
-        base_behind = np.array([[0.0, -2.0, -30.0]]) * self.size 
+        base_behind = np.array([[0.0, -1.0, -15.0]]) * self.size 
 
         base_behind_hmg = np.hstack([base_behind, np.ones((base_behind.shape[0], 1))])
         cameraeye_behind = pose @ base_behind_hmg.transpose()

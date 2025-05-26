@@ -55,9 +55,6 @@ gs:
   lambda_sdf_cons: 0.02
   lambda_sdf_normal_cons: 0.02
   lambda_sdf: 0.5
-  displacement_range_ratio: 4.0 
-  max_scale_ratio: 2.0
-  unit_scale_ratio: 0.5
 continual:
   batch_size_new_sample: 2000
   pool_capacity: 1e7
@@ -78,8 +75,6 @@ optimizer:
   learning_rate_geo: 2e-3
   learning_rate_color: 2e-3
   learning_rate_exposure: 1e-3
-  learning_rate_cam_dr: 3e-3
-  learning_rate_cam_dt: 1e-3
 eval:
   mesh_freq_frame: 10 # reconstruct the mesh every x frames
   mesh_min_nn: 9

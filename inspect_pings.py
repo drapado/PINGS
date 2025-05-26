@@ -46,7 +46,7 @@ from gaussian_splatting.utils.image_utils import psnr
 from fused_ssim import fused_ssim
 
 from gs_gui import slam_gui
-from gs_gui.gui_utils import VisPacket, ParamsGUI
+from gs_gui.gui_utils import VisPacket, ParamsGUI, ControlPacket, get_latest_queue
 
 
 '''
@@ -87,9 +87,9 @@ def inspect_pings_map(
     neural_point_color_mode: int = typer.Option(0, "--neural-point-color-mode", help='0: original rgb, 1: geo feature pca, 2: photo feature pca, 3: time, 4: stability'),
     mesh_mc_m: float = typer.Option(-1, "--mesh-mc-m", help='Marching cubes resolution (in meter) for mesh reconstruction'),
     mesh_min_nn_k: int = typer.Option(-1, "--mesh-min-nn-k", help='SDF querying min neighbor neural point count for mesh reconstruction'),
-    sorrounding_map_r_m: float = typer.Option(2.0, "--sorrounding-map-r-m", help='Radius of the sorrounding map in meter for far-away stuff rendering'),
+    sorrounding_map_r_m: float = typer.Option(-1, "--sorrounding-map-r-m", help='Radius of the sorrounding map in meter for far-away stuff rendering'),
     tsdf_fusion_max_range_m: float = typer.Option(-1, "--tsdf-fusion-max-range-m", help='Maximum range for doing the TSDF fusion'),
-    neural_point_vis_down_rate: int = typer.Option(1, "--neural-point-vis-down-rate", help='Down rate for visualizing the neural points'),
+    neural_point_vis_down_rate: int = typer.Option(17, "--neural-point-vis-down-rate", help='Down rate for visualizing the neural points'),
     render_down_rate: int = typer.Option(-1, "--render-down-rate", help='Down rate of image resolution for rendering')
 ):
 
@@ -113,6 +113,10 @@ def inspect_pings_map(
         config.pc_path = full_config_args["pc_path"]
         config.data_loader_name = full_config_args["data_loader_name"]
         config.data_loader_seq = full_config_args["data_loader_seq"]
+        # print("Please make sure the default values of configurations are not changed for the run")
+        config.displacement_range_ratio = full_config_args["displacement_range_ratio"]
+        config.max_scale_ratio = full_config_args["max_scale_ratio"]
+        config.unit_scale_ratio = full_config_args["unit_scale_ratio"]
 
     video_folder_path = None
     if render_video:
@@ -137,8 +141,6 @@ def inspect_pings_map(
 
     if eval_seq and cam_refine_on:
         config.gs_eval_cam_refine_on = True
-        config.learning_rate_cam_dr = 3e-3
-        config.learning_rate_cam_dr = 1e-3
     else:
         config.gs_eval_cam_refine_on = False
 
@@ -178,7 +180,7 @@ def inspect_pings_map(
     neural_points.temporal_local_map_on = False
     neural_points.compute_feature_principle_components(down_rate=31)
 
-    if sorrounding_map_r_m > 0: # TODO: set to 2x
+    if sorrounding_map_r_m > 0: # otherwise the default value
         config.sorrounding_map_radius = sorrounding_map_r_m
         neural_points.sorrounding_map_radius = sorrounding_map_r_m
 
@@ -187,7 +189,9 @@ def inspect_pings_map(
 
     # Load the map, decoders are then freezed
     # load decoders
-    load_decoders(loaded_model, mlp_dict) 
+    load_decoders(loaded_model, mlp_dict)
+
+    vis_sequence_on = (render_video or recon_3d or eval_seq)
 
     # launch the visualizer 
     # GS visualizer
@@ -210,6 +214,8 @@ def inspect_pings_map(
             mesh_default_on=True,
             neural_point_color_default_mode=neural_point_color_mode, # 0: original rgb, 1: geo feature pca, 2: photo feature pca, 3: time, 4: stability
             neural_point_vis_down_rate=neural_point_vis_down_rate, # better to be a prime number
+            frustum_size=config.vis_frame_axis_len,
+            still_view_default_on=(not vis_sequence_on)
         )
 
         gui_process = mp.Process(target=slam_gui.run, args=(params_gui,)) # TODO: something is wrong here
@@ -297,7 +303,7 @@ def inspect_pings_map(
         cam_names = dataset.cam_names 
 
     # used_poses
-    if render_video or recon_3d or eval_seq:
+    if vis_sequence_on:
         render_with_poses(config, 
             dataset, 
             neural_points, 
@@ -583,7 +589,8 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                 if cur_view_cam.depth_on:
                     gt_depth_image = cur_view_cam.depth_image_list[eval_down_rate]
                     valid_depth_mask = (gt_depth_image > eval_depth_min) & (gt_depth_image < eval_depth_max)
-
+            
+            # here we would also refine the camera pose
             if eval_on and config.gs_eval_cam_refine_on and gt_rgb_image is not None:
 
                 opt = setup_optimizer(config, cams = [cur_view_cam])
@@ -820,34 +827,37 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                         print("TSDF fusion done")
 
         if vis_on:
-            if q_main2vis is not None:
-                    # add the eval frame to vis
-                    packet_to_vis= VisPacket(frame_id=frame_id,
-                        current_frames=dataset.cur_cam_img, 
-                        img_down_rate=eval_down_rate)
-                    
-                    packet_to_vis.add_neural_points_data(neural_points, only_local_map=True)
-                    
-                    # if cur_frame_rendered_pcd_o3d is not None:
-                    #     packet_to_vis.add_scan(np.array(cur_frame_rendered_pcd_o3d.points, dtype=np.float64), np.array(cur_frame_rendered_pcd_o3d.colors, dtype=np.float64))
+            # add the eval frame to vis
+            packet_to_vis= VisPacket(frame_id=frame_id,
+                current_frames=dataset.cur_cam_img, 
+                img_down_rate=eval_down_rate)
+            
+            packet_to_vis.add_neural_points_data(neural_points, only_local_map=True)
+            
+            # if cur_frame_rendered_pcd_o3d is not None:
+            #     packet_to_vis.add_scan(np.array(cur_frame_rendered_pcd_o3d.points, dtype=np.float64), np.array(cur_frame_rendered_pcd_o3d.colors, dtype=np.float64))
 
-                    if cur_frame_measured_pcd_o3d is not None:
-                        packet_to_vis.add_scan(np.array(cur_frame_measured_pcd_o3d.points, dtype=np.float64), 
-                                               np.array(cur_frame_measured_pcd_o3d.colors, dtype=np.float64))
+            if cur_frame_measured_pcd_o3d is not None:
+                packet_to_vis.add_scan(np.array(cur_frame_measured_pcd_o3d.points, dtype=np.float64), 
+                                        np.array(cur_frame_measured_pcd_o3d.colors, dtype=np.float64))
 
-                    if cur_frame_rendered_pcd_o3d is not None:
-                        packet_to_vis.add_rendered_scan(np.array(cur_frame_rendered_pcd_o3d.points, dtype=np.float64), 
-                                                        np.array(cur_frame_rendered_pcd_o3d.colors, dtype=np.float64))
-                    
-                    # odom_poses, gt_poses, pgo_poses = dataset.get_poses_np_for_vis(frame_id)
-                    # packet_to_vis.add_traj(odom_poses, gt_poses, pgo_poses)
+            if cur_frame_rendered_pcd_o3d is not None:
+                packet_to_vis.add_rendered_scan(np.array(cur_frame_rendered_pcd_o3d.points, dtype=np.float64), 
+                                                np.array(cur_frame_rendered_pcd_o3d.colors, dtype=np.float64))
+            
+            # odom_poses, gt_poses, pgo_poses = dataset.get_poses_np_for_vis(frame_id)
+            # packet_to_vis.add_traj(odom_poses, gt_poses, pgo_poses)
 
-                    q_main2vis.put(packet_to_vis)
+            q_main2vis.put(packet_to_vis)
 
-            if q_vis2main is not None:
-                if not q_vis2main.empty():
-                    while q_vis2main.get().flag_pause:
-                        continue
+            if not q_vis2main.empty():
+                control_packet: ControlPacket = get_latest_queue(q_vis2main)
+                while control_packet.flag_pause:
+                    time.sleep(0.1)
+                    if not q_vis2main.empty():
+                        control_packet = get_latest_queue(q_vis2main)
+                        if not control_packet.flag_pause:
+                            break
 
     if eval_on and gs_eval_output_csv_path is not None:
 

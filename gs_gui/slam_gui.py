@@ -121,7 +121,7 @@ class SLAM_GUI:
             self.neural_point_vis_down_rate = params_gui.neural_point_vis_down_rate
             self.frustum_size = params_gui.frustum_size
             self.local_map_default_on = params_gui.local_map_default_on
-
+            self.still_view_default_on = params_gui.still_view_default_on
             
         if self.config is not None:
             seed_anything(self.config.seed)
@@ -358,7 +358,7 @@ class SLAM_GUI:
         viewpoint_tile.add_child(self.staybehind_chbox)
 
         self.still_chbox = gui.Checkbox("Still")
-        self.still_chbox.checked = True
+        self.still_chbox.checked = self.still_view_default_on
         viewpoint_tile.add_child(self.still_chbox)
 
         self.fly_chbox = gui.Checkbox("Fly")
@@ -1488,6 +1488,8 @@ class SLAM_GUI:
                
 
             if data_packet.has_sorrounding_points:
+                print("Spwan surrounding points")
+
                 cur_center_position = data_packet.sorrounding_neural_points_data["center"]
                 
                 # spawn gaussians for the sorrounding map
