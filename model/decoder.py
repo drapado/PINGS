@@ -21,7 +21,7 @@ class Decoder(nn.Module):
         hidden_level,
         out_dim,
         out_k=1, 
-        pos_dim=3, # for gs decoder, pos_dim=0 # with some positional or directional embedding concatenation
+        pos_dim=3, # for gs decoder, pos_dim=0
         is_time_conditioned=False,
     ):
 
@@ -35,13 +35,7 @@ class Decoder(nn.Module):
 
         bias_on = config.mlp_bias_on
 
-        # default not used (positional encoding -> high frequency)
-        if config.use_gaussian_pe:
-            position_dim = pos_dim + 2 * config.pos_encoding_band
-        else:
-            position_dim = pos_dim * (2 * config.pos_encoding_band + 1)
-
-        input_dim = input_feature_dim + position_dim
+        input_dim = input_feature_dim + pos_dim
 
         # default not used
         if is_time_conditioned:

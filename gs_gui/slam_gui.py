@@ -1488,7 +1488,7 @@ class SLAM_GUI:
                
 
             if data_packet.has_sorrounding_points:
-                print("Spwan surrounding points")
+                # print("Spawn surrounding points")
 
                 cur_center_position = data_packet.sorrounding_neural_points_data["center"]
                 

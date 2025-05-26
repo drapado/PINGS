@@ -632,9 +632,6 @@ class NeuralPoints(nn.Module):
             1, 3, device=self.device, dtype=self.dtype
         )
 
-        if self.config.pos_encoding_band > 0:
-            neighb_vector = self.position_encoder_geo(neighb_vector)  # [N, K, P]
-
         if query_geo_feature:
             geo_features_vector = torch.cat(
                 (geo_features, neighb_vector), dim=2

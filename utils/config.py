@@ -142,7 +142,7 @@ class Config:
         
         # MLP decoder
         self.mlp_bias_on: bool = True
-        self.mlp_leaky_relu: bool = False # False
+        self.mlp_leaky_relu: bool = False
         self.geo_mlp_level: int = 1
         self.geo_mlp_hidden_dim: int = 64
         self.sem_mlp_level: int = 1
@@ -159,13 +159,6 @@ class Config:
         # For GS MLPs
         self.dist_concat_on: bool = False
         self.view_concat_on: bool = False
-
-        # positional encoding related [not used]
-        self.use_gaussian_pe: bool = False # use Gaussian Fourier or original log positional encoding
-        self.pos_encoding_freq: int = 200 # 200
-        self.pos_encoding_band: int = 0 # if 0, without encoding
-        self.pos_input_dim: int = 3
-        self.pos_encoding_base: int = 2
 
         # training (mapping) loss
         # the main loss type, select from the sample sdf loss ('bce', 'l1', 'l2', 'zhong') 
@@ -303,15 +296,11 @@ class Config:
 
         self.gs_contribution_threshold: float = 0.1 # 1.0
 
-        self.learn_color_residual: bool = False
+        self.learn_color_residual: bool = False # directly learn the color or learn the residual to a base color
 
         self.min_alpha: float = 0.01
         self.depth_min_accu_alpha: float = 0.2
         self.eval_depth_min_accu_alpha: float = 0.8
-
-        # gs batch mode
-        self.gs_batch_training_on: bool = False
-        self.gs_batch_frame: int = -1
 
         # gs evaluation
         self.gs_eval_cam_refine_on: bool = False  
@@ -726,10 +715,6 @@ class Config:
             self.min_alpha = config_args["gs"].get("min_alpha", self.min_alpha) # this is the per-gaussian alpha
             self.depth_min_accu_alpha = config_args["gs"].get("depth_min_accu_alpha", self.depth_min_accu_alpha) # this is the rendered accumulated alpha for valid depth
             self.eval_depth_min_accu_alpha = config_args["gs"].get("eval_depth_min_accu_alpha", self.eval_depth_min_accu_alpha) # this is the rendered accumulated alpha for valid depth
-
-            self.gs_batch_training_on = config_args["gs"].get("gs_batch_training_on", self.gs_batch_training_on)
-            if self.gs_batch_training_on:
-                self.gs_batch_frame = config_args["gs"].get("gs_batch_frame", self.gs_batch_frame)
 
             self.gs_eval_cam_refine_on = config_args["gs"].get("eval_cam_refine_on", self.gs_eval_cam_refine_on) 
         

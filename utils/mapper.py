@@ -1689,6 +1689,7 @@ class Mapper:
     def gs_eval_offline(self, q_main2vis=None, 
                         q_vis2main=None, 
                         eval_down_rate: int = 0, 
+                        skip_begin_count: int = 0,
                         skip_end_count: int = 0, 
                         sorrounding_map_radius = None,
                         lpips_eval_on: bool = False,
@@ -1724,9 +1725,11 @@ class Mapper:
         #     vdb_volume = vdbfusion.VDBVolume(tsdf_fusion_voxel_size,
         #                                     sdf_trunc,
         #                                     space_carving_on)
+        
+        assert skip_begin_count < self.dataset.processed_frame-skip_end_count, "No frame would be evaluated due to wrong setting of skip_begin_count and skip_end_count"
 
         # skip_end_count means that we will skip the last n frames because the incremental mapping haven't done much mapping in such areas
-        for frame_id in tqdm(range(0, self.dataset.processed_frame - skip_end_count, 1), desc="GS evaluation"):
+        for frame_id in tqdm(range(skip_begin_count, self.dataset.processed_frame - skip_end_count, 1), desc="GS evaluation"):
             
             self.dataset.init_temp_data()
 

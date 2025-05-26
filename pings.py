@@ -84,12 +84,12 @@ def run_pings(
     input_path: Optional[str] = typer.Option(None, '--input-path', '-i', help='Path to the point cloud input directory (overrides pc_path in config file)'),
     output_path: Optional[str] = typer.Option(None, '--output-path', '-o', help='Path to the result output directory (overrides output_root in config file)'),
     frame_range: Optional[Tuple[int, int, int]] = typer.Option(None, '--range', help='Specify the start, end and step of the processed frame, e.g. "10 1000 1"'),
-    visualize: bool = typer.Option(False, '--visualize', '-v', help='Turn on the GS visualizer (could make the SLAM processing slower)'),
-    log_on: bool = typer.Option(False, '--log-on', '-l', help='Turn on the logs printing'),
-    wandb_on: bool = typer.Option(False, '--wandb-on', '-w', help='Turn on the weight & bias logging'),
-    save_map: bool = typer.Option(False, '--save-map', '-s', help='Save the PIN map after SLAM'),
-    save_mesh: bool = typer.Option(False, '--save-mesh', '-m', help='Save the reconstructed mesh after SLAM'),
-    save_merged_pc: bool = typer.Option(False, '--save-merged-pc', '-p', help='Save the merged point cloud after SLAM'),
+    visualize: bool = typer.Option(False, '--visualize', '-v', help='Turn on the GS visualizer, could make the SLAM processing slower (default: off)'),
+    log_on: bool = typer.Option(False, '--log-on', '-l', help='Turn on the logs printing (default: off)'),
+    wandb_on: bool = typer.Option(False, '--wandb-on', '-w', help='Turn on the weight & bias logging (default: off)'),
+    save_map: bool = typer.Option(False, '--save-map', '-s', help='Save the PIN map after SLAM (default: off)'),
+    save_mesh: bool = typer.Option(False, '--save-mesh', '-m', help='Save the reconstructed mesh after SLAM (default: off)'),
+    save_merged_pc: bool = typer.Option(False, '--save-merged-pc', '-p', help='Save the merged point cloud after SLAM (default: off)'),
     gs_on: bool = typer.Option(True, '--gs-on/--gs-off', '-g', help='Turn on GS (default: on)'),
     tracker_on: bool = typer.Option(True, '--tracker-on/--tracker-off', help='Turn on pose tracker (default: on), otherwise it would be pure mapping mode. If one has already set in the config file the tracker to be off, we would anyway let it be off'),
     deskew: bool = typer.Option(True, '--deskew/--no-deskew', help='Try to deskew the LiDAR scans if it is not set in the config file (default: on)'),
@@ -497,8 +497,12 @@ def run_pings(
     if config.gs_on and config.gs_eval_on: 
         print("Begin rendering evaluation")
         neural_points.sorrounding_map_radius = 2.0 * config.local_map_radius
-        mapper.gs_eval_offline(None, q_vis2main, eval_down_rate=config.gs_vis_down_rate, skip_end_count=10, 
-                               lpips_eval_on=True, pc_cd_eval_on=config.rendered_pc_eval_on, 
+        mapper.gs_eval_offline(None, q_vis2main, 
+                               eval_down_rate=config.gs_vis_down_rate, 
+                               skip_begin_count=10,
+                               skip_end_count=10, 
+                               lpips_eval_on=True, 
+                               pc_cd_eval_on=config.rendered_pc_eval_on, 
                                rerender_tsdf_fusion_on=config.rerender_tsdf_fusion_on) # FIXME
         mapper.gs_eval_out()
 

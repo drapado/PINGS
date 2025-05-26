@@ -61,10 +61,6 @@ class IPBCarDataset:
         self.cam_front_topic_name = "front" 
         self.cam_rear_topic_name = "rear"
 
-        # cameras are almost triggered at the same time
-        # h lidar 's timstamp is usually 0.05s later than camera's ts
-        # figure out why 0.3-0.35 is a good value for the deskew ref ratio
-
         cam_list_all = [self.cam_front_topic_name, self.cam_left_topic_name, self.cam_rear_topic_name, self.cam_right_topic_name]
 
         if cam_name in cam_list_all: 
@@ -175,8 +171,6 @@ class IPBCarDataset:
         sensor_ts_dict["lidar_h"] = h_lidar_ref_ts
         # print("H Lidar ts: {}".format(h_lidar_ref_ts))
 
-        # TODO: read ply is a bot too slow, try to use *.bin (done), but for *.bin, there some problem of the timestamp loading
-        # read bin is very fast
         points, point_ts = self.read_point_cloud_ply(self.lidar_horizontal_files[idx]) # lidar_h_points
 
         # toc_read_pc = get_time()
@@ -194,9 +188,9 @@ class IPBCarDataset:
         # from 0 to lidar_h_point_count-1: lidar_h
         # from lidar_h_point_count to end: lidar_v
 
-        # TODO: it's not correct to firstly combine the two point clouds are then apply undistortion
-        # FIXME: you need to apply a T_lv_lh to the points from the vertical liadr during the undistortion
-        # For multiple-LiDAR cases, you still have something to deal with
+        # FIXME: it's not correct to firstly combine the two point clouds are then apply undistortion
+        # you need to apply a T_lv_lh to the points from the vertical liadr during the undistortion
+        # Now we only use the single horizontal lidar
         if not self.use_only_lidar_h:
             
             v_lidar_ref_ts = self.lidar_vertical_ts[idx]
@@ -261,8 +255,6 @@ class IPBCarDataset:
                 
                 # toc_1 = get_time()
                 
-                # TODO: a bit slow, try to speed it up
-                # we do not to do this here anymore
                 # FIXME: not used now
                 # points_rgb, depth_map = self.project_points_to_cam(points, points_rgb, img_cam, self.T_c_l_mats[cam_name], self.K_mats[cam_name])
 
