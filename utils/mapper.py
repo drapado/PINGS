@@ -1852,7 +1852,9 @@ class Mapper:
                     if self.config.affine_exposure_correction:
                         cur_view_cam.set_exposure_affine(cur_exposure[0], cur_exposure[1])
                     else:
-                        cur_view_cam.set_exposure_ab(cur_exposure[0], cur_exposure[1])           
+                        cur_view_cam.set_exposure_ab(cur_exposure[0], cur_exposure[1])
+                
+                # FIXME: set cam poses           
 
                 if cam_name in eval_cam_name:
 
@@ -1908,7 +1910,7 @@ class Mapper:
 
                         rendered_rgb_image_for_eval = rendered_rgb_image[:,:pixel_h_used,:]
 
-                        if not self.config.gs_eval_cam_refine_on:
+                        if not self.config.gs_eval_cam_refine_on: # do not optimize cam parameters, directly break
                             break
 
                         loss_rgb_robust = tukey_loss(rendered_rgb_image_for_eval, gt_rgb_image_for_eval, c=0.0) # now just l1 loss

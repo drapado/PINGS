@@ -3,7 +3,7 @@
 
 # NOTE: if your computer has some issue working with OpenGL, set this to True, 
 # then the visualization of Gaussian ellipsoid would be disabled.
-gl_issue = True 
+gl_issue = True
 
 from typing import Dict, List, Tuple
 import threading
@@ -141,6 +141,9 @@ class SLAM_GUI:
 
         # these are only used for the elliopsoid rendering 
 
+        # print("[GUI] gl_issue:", gl_issue)
+        self.gl_issue_notified = False
+
         if not gl_issue:
       
             self.g_camera = util.Camera(self.window_h, self.window_w)
@@ -179,7 +182,7 @@ class SLAM_GUI:
         # self.window_w, self.window_h = 2560, 1600
 
         self.window = gui.Application.instance.create_window(
-           "📍 PINGS Viewer", self.window_w, self.window_h
+           "📌 PINGS Viewer", self.window_w, self.window_h
         )
         self.window.set_on_layout(self._on_layout)
         self.window.set_on_close(self._on_close)
@@ -2211,7 +2214,15 @@ class SLAM_GUI:
             
             render_img = o3d.geometry.Image(opacity_color)
 
-        elif self.ellipsoid_chbox.checked and not gl_issue:
+        elif self.ellipsoid_chbox.checked:
+
+            if gl_issue:
+
+                if not self.gl_issue_notified:
+                    print("[GUI] GL issue, disable ellipsoid rendering, set gl_issue to False to enable it")
+                    self.gl_issue_notified = True
+                
+                return
 
             if self.cur_data_packet is None:
                 return

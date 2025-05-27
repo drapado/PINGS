@@ -1390,7 +1390,7 @@ def plot_timing_detail(time_table: np.ndarray, saving_path: str, with_loop=False
     # [label.set_fontname('Times New Roman') for label in labels]
 
     plt.xlim((0, frame_count - 1))
-    plt.ylim((0, 5000)) # 5s
+    plt.ylim((0, 10000)) # 10s
 
     plt.xlabel("Frame ID", font2)
     plt.ylabel("Runtime (ms)", font2)

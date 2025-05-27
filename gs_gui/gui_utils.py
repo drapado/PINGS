@@ -192,7 +192,7 @@ class VisPacket:
                 self.neural_points_data["ts"] = neural_points.local_point_ts_update
                 self.neural_points_data["stability"] = neural_points.local_point_certainties
 
-                if pca_color_on:
+                if pca_color_on and self.neural_points_data["local_count"] > 10:
                     local_geo_feature_3d, _ = feature_pca_torch((self.neural_points_data["geo_feature"])[:-1], principal_components=neural_points.geo_feature_pca, down_rate=17)
                     self.neural_points_data["color_pca_geo"] = local_geo_feature_3d
 

@@ -56,7 +56,7 @@ from gs_gui.gui_utils import VisPacket, ParamsGUI, ControlPacket, get_latest_que
 app = typer.Typer(add_completion=False, rich_markup_mode="rich", context_settings={"help_option_names": ["-h", "--help"]})
 
 docstring = f"""
-:round_pushpin: All the utilities to inspect the PINGS map
+:pushpin: All the utilities to inspect the PINGS map
 
 [bold green]Examples: [/bold green]
 
@@ -78,7 +78,7 @@ def inspect_pings_map(
     pose_path: Optional[str] = typer.Option(None, "--pose-path", "-p", help='Path to a certain pose txt file specified in KITTI format, the poses are used for rendering'),
     frame_range: Optional[Tuple[int, int, int]] = typer.Option(None, "--range", help='Specify the start, end and step of the frame for video rendering or evaluation, for example: --range 10 1000 1. If not specified, the whole sequence will be used. When doing evaluation, the frame range is according to the used dataset instead of the pose file'),
     center_frame_id: int = typer.Option(0, "--center-frame-id", "-f", help='set the PINGS local map to be centered at this frame id'),
-    visualize: bool = typer.Option(True, '--visualize/--no-visualize', '-v', help='Turn on the GS visualizer (default: on)'),
+    visualize: bool = typer.Option(True, '--visualize/--no-visualize', help='Turn on the GS visualizer (default: on)'),
     log_on: bool = typer.Option(False, "--log-on", "-l", help='Turn on the logs printing'),
     eval_seq: bool = typer.Option(False, "--eval-seq", "-e", help='Do the evaluation on the input sequence'),
     use_free_view_camera: bool = typer.Option(False, "--use-free-view-camera", "-c", help='Render video with the recorded free view camera, input via -p'),
@@ -93,7 +93,8 @@ def inspect_pings_map(
     sorrounding_map_r_m: float = typer.Option(-1, "--sorrounding-map-r-m", "-r", help='Radius of the sorrounding map in meter for far-away stuff rendering'),
     tsdf_fusion_max_range_m: float = typer.Option(-1, "--tsdf-fusion-max-range-m", help='Maximum range for doing the TSDF fusion'),
     neural_point_vis_down_rate: int = typer.Option(17, "--neural-point-vis-down-rate", help='Down rate for visualizing the neural points'),
-    render_down_rate: int = typer.Option(-1, "--render-down-rate", help='Down rate of image resolution for rendering')
+    render_down_rate: int = typer.Option(-1, "--render-down-rate", help='Down rate of image resolution for rendering'),
+    normal_with_alpha: bool = typer.Option(False, "--normal-with-alpha", help='Show the normal with alpha channel')
 ):
 
     yaml_files = glob.glob(f"{experiment_path}/*.yaml")
@@ -137,7 +138,7 @@ def inspect_pings_map(
     if input_path is not None:
         config.pc_path = input_path
 
-    print("[bold green]Load PINGS Map[/bold green]","📍" )
+    print("[bold green]Load PINGS Map[/bold green]","📌" )
 
     run_path = setup_experiment(config, sys.argv, debug_mode=True)
     config.use_dataloader = True
@@ -189,9 +190,60 @@ def inspect_pings_map(
     # load decoders
     load_decoders(loaded_model, mlp_dict)
 
-    vis_sequence_on = (render_video or recon_3d or eval_seq)
+    # default case, we use the pose file of the experiment run (then it would be the in-sequence views)
+    if pose_path is None or (not os.path.exists(pose_path)):
+        pose_path_used = os.path.join(experiment_path, "slam_poses_kitti.txt")
+        if not os.path.exists(pose_path_used):
+            pose_path_used = os.path.join(experiment_path, "gt_poses_kitti.txt")
+    else:
+        pose_path_used = pose_path
 
-    # launch the visualizer 
+    # dataset
+    dataset = SLAMDataset(config)
+    # print(dataset.cam_names)
+
+    config.pose_path = pose_path_used # but how is this used?
+    poses_used = read_kitti_format_poses(pose_path_used)
+
+    if eval_seq:
+        poses_for_render = dataset.gt_poses # need to guarantee gt_poses exist
+        print("Evaluate the map built by the experiment {}".format(experiment_path))
+        print("The provided frame ID is according to the used dataset at {}".format(config.pc_path))
+    else:
+        poses_for_render = poses_used
+        print("The provided frame ID is according to the pose file {}".format(pose_path_used))
+
+    if frame_range is not None:
+        view_stream = True
+        frame_begin, frame_end, frame_step = frame_range
+        if frame_end == -1:
+            frame_end = len(poses_for_render)
+        poses_for_render_show = poses_for_render[frame_begin:frame_end]
+    else:
+        view_stream = False
+        frame_begin, frame_end, frame_step = 0, len(poses_for_render), 1
+        poses_for_render_show = poses_for_render
+        if eval_seq:
+            print("Warning: the frame ID is according to the dataset, but the frame range is not specified, using the whole sequence")
+
+    # reset neural points
+    if eval_seq and center_frame_id == 0: # if use dataset frame ID and do not specify the center frame ID
+        c_frame_id = frame_begin
+    else:
+        c_frame_id = center_frame_id
+    frame_count = len(poses_for_render)
+    c_frame_id = min(c_frame_id, frame_count-1)
+    
+    ref_pose = torch.tensor(poses_for_render[c_frame_id], device=config.device, dtype=config.dtype)
+    ref_position = ref_pose[:3,3]
+
+    neural_points.recreate_hash(ref_position, with_ts=False)
+
+    # mesh reconstructor
+    mesher = Mesher(config, neural_points, mlp_dict)
+
+    vis_sequence_on = (render_video or recon_3d or eval_seq or view_stream)
+
     # GS visualizer
     q_main2vis = q_vis2main = None
     if visualize:
@@ -220,53 +272,6 @@ def inspect_pings_map(
         gui_process.start()
         time.sleep(2) # second
 
-    # default case, we use the pose file of the experiment run (then it would be the in-sequence views)
-    if pose_path is None or (not os.path.exists(pose_path)):
-        pose_path_used = os.path.join(experiment_path, "slam_poses_kitti.txt")
-        if not os.path.exists(pose_path_used):
-            pose_path_used = os.path.join(experiment_path, "gt_poses_kitti.txt")
-    else:
-        pose_path_used = pose_path
-
-    # dataset
-    dataset = SLAMDataset(config)
-    # print(dataset.cam_names)
-
-    config.pose_path = pose_path_used # but how is this used?
-    poses_used = read_kitti_format_poses(pose_path_used)
-
-    if eval_seq:
-        poses_for_render = dataset.gt_poses # need to guarantee gt_poses exist
-        print("Evaluate the map built by the experiment {}".format(experiment_path))
-        print("The provided frame range is according to the used dataset at {}".format(config.pc_path))
-    else:
-        poses_for_render = poses_used
-        print("The provided frame range is according to the pose file {}".format(pose_path_used))
-
-    if frame_range is not None:
-        frame_begin, frame_end, frame_step = frame_range
-        if frame_end == -1:
-            frame_end = len(poses_for_render)
-        poses_for_render_show = poses_for_render[frame_begin:frame_end]
-    else:
-        frame_begin, frame_end, frame_step = 0, len(poses_for_render), 1
-        poses_for_render_show = poses_for_render
-
-    # reset neural points
-    center_frame_id = int(center_frame_id)
-    frame_count = len(poses_used)
-    center_frame_id = min(center_frame_id, frame_count-1)
-    if center_frame_id >= frame_count:
-        print("Warning: center_frame_id is out of range, using the last frame")
-    
-    ref_pose = torch.tensor(poses_used[center_frame_id], device=config.device, dtype=config.dtype)
-    ref_position = ref_pose[:3,3]
-
-    neural_points.recreate_hash(ref_position, with_ts=False)
-
-    # mesh reconstructor
-    mesher = Mesher(config, neural_points, mlp_dict)
-
     cur_mesh = None
     if show_mesh:
 
@@ -284,25 +289,27 @@ def inspect_pings_map(
         chunks_aabb = split_chunks(neural_pcd, mesh_aabb, mesh_vox_size_m*500) 
         print("Number of chunks for reconstruction:", len(chunks_aabb))
         print("Marching cubes resolution: {:.2f} m".format(mesh_vox_size_m))
+        if log_on:
+            print("mesh_min_nn:", mesh_min_nn_k_used)
 
         out_mesh_path = None
         cur_mesh = mesher.recon_aabb_collections_mesh(chunks_aabb, mesh_vox_size_m, out_mesh_path, False, False, \
                                                     config.color_on, filter_isolated_mesh=True, mesh_min_nn=mesh_min_nn_k_used)
 
-        if visualize and cur_mesh is not None:
-            packet_to_vis: VisPacket = VisPacket(frame_id=center_frame_id, img_down_rate=config.gs_vis_down_rate)
-            packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not show_global), pca_color_on=True)
-            # if not the same, then gt_poses as in-sequence views, slam_poses as the out-of-sequence views
-            packet_to_vis.add_traj(gt_poses=np.array(poses_used), slam_poses=np.array(poses_for_render_show))
-
+    if visualize:
+        packet_to_vis: VisPacket = VisPacket(frame_id=c_frame_id, img_down_rate=config.gs_vis_down_rate)
+        packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not show_global), pca_color_on=True)
+        # if not the same, then gt_poses as in-sequence views, slam_poses as the out-of-sequence views
+        packet_to_vis.add_traj(gt_poses=np.array(poses_used), slam_poses=np.array(poses_for_render_show))
+        
+        if cur_mesh is not None:
             packet_to_vis.add_mesh(np.array(cur_mesh.vertices, dtype=np.float64), np.array(cur_mesh.triangles), np.array(cur_mesh.vertex_colors, dtype=np.float64))
-            
-            q_main2vis.put(packet_to_vis)
-
+        
+        q_main2vis.put(packet_to_vis)
+    
+    cam_names = dataset.cam_names 
     if use_free_view_camera: 
         cam_names = ["free_cam"]
-    else:
-        cam_names = dataset.cam_names 
 
     # used_poses
     if vis_sequence_on:
@@ -324,23 +331,12 @@ def inspect_pings_map(
             eval_cam_refine_on=cam_refine_on,
             log_on=log_on,
             use_free_view_camera=use_free_view_camera,
+            normal_with_alpha=normal_with_alpha,
             frame_begin=frame_begin,
             frame_end=frame_end,
             frame_step=frame_step,
             q_main2vis=q_main2vis, 
             q_vis2main=q_vis2main)
-    
-    neural_points.recreate_hash(ref_position, with_ts=False)
-
-    if visualize:
-        packet_to_vis: VisPacket = VisPacket(frame_id=center_frame_id, img_down_rate=config.gs_vis_down_rate)
-        packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not show_global), pca_color_on=True)
-        packet_to_vis.add_traj(gt_poses=np.array(poses_used), slam_poses=np.array(poses_for_render_show))
-        if cur_mesh is not None:
-            packet_to_vis.add_mesh(np.array(cur_mesh.vertices, dtype=np.float64), 
-                                   np.array(cur_mesh.triangles), 
-                                   np.array(cur_mesh.vertex_colors, dtype=np.float64))    
-        q_main2vis.put(packet_to_vis)
 
 
 def render_with_poses(config: Config, dataset: SLAMDataset,

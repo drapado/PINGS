@@ -248,7 +248,7 @@ class Config:
         self.gs_keyframe_accu_travel_dist: float = 0.1 # unit: m
         self.gs_keyframe_accu_travel_degree: float = 30.0 # unit: degree
 
-        self.lastest_train_prob: float = 0.2 # the probabilibilty of sampling a cam from the lastest observation for training # TODO
+        self.lastest_train_prob: float = 0.1 # the probabilibilty of sampling a cam from the lastest observation for training
         self.short_term_train_prob: float = 0.5 # the probabilibilty of sampling a cam from short-term memory for training
         self.long_term_train_down: bool = False # downsample the training image for long-term memory, faster, vague supervision in long term memory
         
@@ -298,7 +298,7 @@ class Config:
 
         self.learn_color_residual: bool = False # directly learn the color or learn the residual to a base color
 
-        self.min_alpha: float = 0.01
+        self.min_alpha: float = 0.05
         self.depth_min_accu_alpha: float = 0.2
         self.eval_depth_min_accu_alpha: float = 0.8
 
@@ -679,6 +679,7 @@ class Config:
 
             self.img_pool_size = config_args["gs"].get("img_pool_size", self.img_pool_size)
             self.long_term_pool_size = config_args["gs"].get("long_term_img_pool_size", 2*self.img_pool_size)
+            self.lastest_train_prob = config_args["gs"].get("lastest_train_prob", self.lastest_train_prob)
             self.short_term_train_prob = config_args["gs"].get("short_term_train_prob", self.short_term_train_prob)
             self.long_term_train_down = config_args["gs"].get("long_term_train_down", self.long_term_train_down)
 

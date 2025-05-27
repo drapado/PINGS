@@ -49,7 +49,7 @@ from gs_gui import slam_gui
 from gs_gui.gui_utils import VisPacket, ParamsGUI, ControlPacket, get_latest_queue
 
 '''
-    📍PINGS: Gaussian Splatting Meets Distance Fields within a Point-Based Implicit Neural Map
+    📌PINGS: Gaussian Splatting Meets Distance Fields within a Point-Based Implicit Neural Map
      Y. Pan et al. from IPB
 '''
 
@@ -58,7 +58,7 @@ app = typer.Typer(add_completion=False, rich_markup_mode="rich", context_setting
 _available_dl_help = available_dataloaders()
 
 docstring = f"""
-:round_pushpin: PINGS: joint distance field and radiance field mapping using a unified neural representation\n
+:pushpin: PINGS: joint distance field and radiance field mapping using a unified neural representation\n
 
 [bold green]Examples: [/bold green]
 

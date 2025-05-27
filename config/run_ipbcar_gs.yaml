@@ -46,7 +46,8 @@ gs:
   exposure_correction_on: True
   affine_exposure_correction: True 
   cam_pose_train_on: False
-  view_concat_on: True
+  eval_cam_refine_on: False
+  view_concat_on: False
   # dist_concat_on: True
   learn_color_residual: False
   n_gaussian: 8
@@ -59,14 +60,16 @@ gs:
   gs_vis_down_rate: 1
   gs_keyframe_accu_dist: 1.0 # unit: m
   lambda_depth: 0.01
-  lambda_opacity: 2e-4 # 1e-3 # increase to have more valid Gaussians
-  lambda_area: 1e-3 # 2e-4
+  lambda_opacity: 1e-3 # 5e-4 # increase to have more valid Gaussians
+  lambda_area: 1e-2 # 2e-4
   lambda_normal_depth: 0.01
   consist_shift_count: 0
   lambda_sdf_cons: 0.01
   lambda_sdf_normal_cons: 0.01
   lambda_sdf: 0.5
-  min_alpha: 0.05
+  unit_scale_ratio: 0.2
+  max_scale_ratio: 1.0
+  displacement_range_ratio: 1.0
 optimizer:
   iters: 15 # sdf mapping iterations per frame
   batch_size: 8192
