@@ -235,10 +235,7 @@ class SLAM_GUI:
 
         # mesh 
         self.mesh_render = rendering.MaterialRecord()
-        if self.mesh_default_on:
-            self.mesh_render.shader = "defaultLit"
-        else:
-            self.mesh_render.shader = "normals" 
+        self.mesh_render.shader = "normals" # "defaultLit"
 
         # trajectory
         self.traj_render = rendering.MaterialRecord()

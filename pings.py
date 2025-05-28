@@ -219,6 +219,7 @@ def run_pings(
             is_rgbd=dataset.is_rgbd,
             neural_point_vis_down_rate=config.neural_point_vis_down_rate,
             gs_default_on=gs_on,
+            mesh_default_on=config.mesh_default_on,
             frustum_size=config.vis_frame_axis_len,
         )
         gui_process = mp.Process(target=slam_gui.run, args=(params_gui,))
@@ -343,12 +344,12 @@ def run_pings(
                 mapper.joint_gsdf_mapping(config.gs_iters)
             
         if valid_lidar_frame_flag and mapper.sdf_train_frame_count > 5 and config.gs_invalid_check_on:
-            mapper.check_invalid_neural_points() # render_min_nn_count=config.query_nn_k
+            mapper.check_invalid_neural_points(render_min_nn_count=config.min_valid_nn_k)
 
         T6 = get_time()
 
         # regular saving logs (not used)
-        if config.log_freq_frame > 0 and (used_frame_count+1) % config.log_freq_frame == 0:
+        if config.log_freq_frame > 0 and (used_frame_count % config.log_freq_frame == 0):
             dataset.write_results_log()
 
         if not config.silence:
@@ -407,7 +408,7 @@ def run_pings(
                     neural_pcd = None
                 
                     # reconstruction by marching cubes
-                    if vis_mesh_on and (frame_id == 0 or frame_id == last_frame or (used_frame_count+1) % vis_mesh_freq_frame == 0 or pgm.last_loop_idx == frame_id):            
+                    if vis_mesh_on and (frame_id == last_frame or (used_frame_count-1) % vis_mesh_freq_frame == 0 or pgm.last_loop_idx == frame_id):            
                         # update map bbx
                         global_neural_pcd_down = neural_points.get_neural_points_o3d(query_global=True, random_down_ratio=31) # prime number
                         dataset.map_bbx = global_neural_pcd_down.get_axis_aligned_bounding_box()
@@ -423,7 +424,7 @@ def run_pings(
                             chunks_aabb = split_chunks(global_neural_pcd_down, aabb, vis_mesh_mc_res_m*100) # reconstruct in chunks
                             cur_mesh = mesher.recon_aabb_collections_mesh(chunks_aabb, vis_mesh_mc_res_m, None, False, config.semantic_on, config.color_on, filter_isolated_mesh=True, mesh_min_nn=vis_mesh_min_nn)    
                     
-                    if vis_sdf_on and (frame_id == 0 or frame_id == last_frame or (used_frame_count+1) % vis_sdf_freq_frame == 0):
+                    if vis_sdf_on and (frame_id == last_frame or (used_frame_count-1) % vis_sdf_freq_frame == 0):
                         sdf_bound = config.surface_sample_range_m * 4.0
                         vis_sdf_bbx = create_bbx_o3d(dataset.cur_pose_ref[:3,3], config.max_range/2)
                         cur_sdf_slice_h = mesher.generate_bbx_sdf_hor_slice(vis_sdf_bbx, dataset.cur_pose_ref[2,3] + vis_sdf_slice_height, vis_sdf_res_m, True, -sdf_bound, sdf_bound) # horizontal slice (local)

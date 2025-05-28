@@ -57,7 +57,7 @@ class Config:
         # distance filter
         self.min_range: float = 2.5 # filter too-close points (and 0 artifacts)
         self.max_range: float = 60.0 # filter far-away points
-        self.range_filter_2d: bool = True # do the range-based filter according to 2d (xy) distance or 3d (xyz) distance (important!!! FIXME, for rgbd dataset, better to use 3d version) 
+        self.range_filter_2d: bool = True # do the range-based filter according to 2d (xy) distance or 3d (xyz) distance (FIXME, for rgbd dataset, better to use 3d version) 
         self.adaptive_range_on: bool = False # use an adpative range
 
         self.estimate_normal: bool = False
@@ -114,7 +114,7 @@ class Config:
 
         # local map
         self.diff_ts_local: float = 400.0 # deprecated (use travel distance instead)
-        self.local_map_travel_dist_ratio: float = 4.0
+        self.local_map_travel_dist_ratio: float = 5.0
         self.local_map_radius: float = 50.0
         self.sorrounding_map_radius: float = 100.0  # radius for the sorrounding map, for rendering the background (the gaussians in it are not optimizable) 
 
@@ -181,7 +181,7 @@ class Config:
         self.weight_e: float = 0.5 
 
         self.weight_s: float = 1.0  # weight for semantic classification loss
-        self.weight_i: float = 1.0  # weight for color or intensity regression loss
+        self.weight_i: float = 0.1  # weight for color or intensity regression loss
 
         # optimizer
         self.mapping_freq_frame: int = 1
@@ -233,6 +233,7 @@ class Config:
         self.cam_pose_train_on: bool = False # jointly optimize camera pose during training
 
         self.gs_invalid_check_on: bool = True
+        self.min_valid_nn_k: int = 6
 
         self.bg_color = [1.0, 1.0, 1.0] # white 
         
@@ -655,6 +656,7 @@ class Config:
             self.cam_pose_train_on = config_args["gs"].get("cam_pose_train_on", self.cam_pose_train_on)
 
             self.gs_invalid_check_on = config_args["gs"].get("invalid_check_on", self.gs_invalid_check_on) 
+            self.min_valid_nn_k = config_args["gs"].get("min_valid_nn_k", self.min_valid_nn_k)
 
             self.monodepth_on = config_args["gs"].get("monodepth_on", self.monodepth_on)
             self.monodepth_gaussian_res = config_args["gs"].get("monodepth_gaussian_res", self.voxel_size_m * 5.0)
@@ -741,7 +743,8 @@ class Config:
             self.sdfslice_freq_frame = config_args["eval"].get('sdf_freq_frame', 1)
             self.sdf_slice_height = config_args["eval"].get('sdf_slice_height', self.sdf_slice_height) # in sensor frame, unit: m
             
-            # mesh masking
+            # mesh reconstruction
+            self.mesh_default_on = config_args["eval"].get('mesh_default_on', self.mesh_default_on)
             self.mesh_min_nn = config_args["eval"].get('mesh_min_nn', self.mesh_min_nn)
             self.skip_top_voxel = config_args["eval"].get('skip_top_voxel', self.skip_top_voxel)
             self.min_cluster_vertices = config_args["eval"].get('min_cluster_vertices', self.min_cluster_vertices)

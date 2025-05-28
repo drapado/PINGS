@@ -77,6 +77,12 @@ The commands depend on your CUDA version (check it by `nvcc --version`). You may
 pip3 install -r requirements.txt
 ```
 
+## Docker
+<details>
+  <summary>[TODO]</summary>
+
+</details>
+
 ## Data Preparation
 
 A dataset with both RGB and depth observations (LiDAR or depth camera) with extrinsic and intrinsic calibration parameters is required. Note that the input images are supposed to have been already undistorted.
@@ -85,19 +91,20 @@ If only depth measurements are available, you can still run PINGS with the `--gs
 
 To extract individual observations from a ROS bag, you may use the [ROS bag converter tool](https://github.com/YuePanEdward/rosbag_converter).
 
-For your own dataset, you may need to implement a new dataloader class and put it in the `dataset/dataloaders` folder.
+For your own dataset, you may need to implement a new dataloader class and put it in the `dataset/dataloaders` folder. 
+Check [here](https://github.com/PRBonn/PINGS/blob/main/dataset/dataloaders/ipb_car.py) for an example.
 
 
 ## Run PINGS
 
 
-To check how to run PINGS, you can use the following command:
+To check how to run PINGS and which datasets have already been supported, you can use the following command:
 
 ```
 python3 pings.py -h 
 ```
 
-To check how to inspect the results afterwards, you can use the following command:
+To check how to inspect the map built by PINGS, you can use the following command:
 
 ```
 python3 inspect_pings.py -h 

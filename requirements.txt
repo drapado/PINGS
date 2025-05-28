@@ -17,13 +17,14 @@ opencv-python
 torchmetrics==1.4.1
 ninja
 submodules/diff-gaussian-surfel-rasterization-w-pose
-submodules/diff-gaussian-rasterization-w-pose
 submodules/fused-ssim
 # for gs visualizer
 PyOpenGL
 glfw
 PyGLM==2.7.0
 imageio[ffmpeg]
+# # optional for baseline method using 3dgs
+# submodules/diff-gaussian-rasterization-w-pose
 # # optional for metric3d mono depth estimation
 # mmcv
 # timm

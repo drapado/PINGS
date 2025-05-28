@@ -144,8 +144,6 @@ def inspect_pings_map(
 
     run_path = setup_experiment(config, sys.argv, debug_mode=True)
     config.use_dataloader = True
-
-    mp.set_start_method("spawn") # don't forget this
     
     # initialize the mlp decoder
     geo_feature_dim = config.feature_dim
@@ -200,53 +198,11 @@ def inspect_pings_map(
     else:
         pose_path_used = pose_path
 
-    # dataset
-    dataset = SLAMDataset(config)
-    # print(dataset.cam_names)
-
-    config.pose_path = pose_path_used # but how is this used?
-    poses_used = read_kitti_format_poses(pose_path_used)
-
-    if eval_seq:
-        poses_for_render = dataset.gt_poses # need to guarantee gt_poses exist
-        print("Evaluate the map built by the experiment {}".format(experiment_path))
-        print("The provided frame ID is according to the used dataset at {}".format(config.pc_path))
-    else:
-        poses_for_render = poses_used
-        print("The provided frame ID is according to the pose file {}".format(pose_path_used))
-
-    if frame_range is not None:
-        view_stream = True
-        frame_begin, frame_end, frame_step = frame_range
-        if frame_end == -1:
-            frame_end = len(poses_for_render)
-        poses_for_render_show = poses_for_render[frame_begin:frame_end]
-    else:
-        view_stream = False
-        frame_begin, frame_end, frame_step = 0, len(poses_for_render), 1
-        poses_for_render_show = poses_for_render
-        if eval_seq:
-            print("Warning: the frame ID is according to the dataset, but the frame range is not specified, using the whole sequence")
-
-    # reset neural points
-    if eval_seq and center_frame_id == 0: # if use dataset frame ID and do not specify the center frame ID
-        c_frame_id = frame_begin
-    else:
-        c_frame_id = center_frame_id
-    frame_count = len(poses_for_render)
-    c_frame_id = min(c_frame_id, frame_count-1)
-    
-    ref_pose = torch.tensor(poses_for_render[c_frame_id], device=config.device, dtype=config.dtype)
-    ref_position = ref_pose[:3,3]
-
-    neural_points.recreate_hash(ref_position, with_ts=False)
-
-    # mesh reconstructor
-    mesher = Mesher(config, neural_points, mlp_dict)
-
-    vis_sequence_on = (render_video or recon_3d or eval_seq or view_stream)
+    vis_sequence_on = (render_video or recon_3d or eval_seq or (frame_range is not None))
     still_view_on = (not vis_sequence_on) or show_neural_point
 
+    mp.set_start_method("spawn") # don't forget this
+    
     # GS visualizer
     q_main2vis = q_vis2main = None
     if visualize:
@@ -274,6 +230,49 @@ def inspect_pings_map(
         gui_process = mp.Process(target=slam_gui.run, args=(params_gui,))
         gui_process.start()
         time.sleep(2) # second
+
+    # dataset
+    dataset = SLAMDataset(config)
+    # print(dataset.cam_names)
+
+    config.pose_path = pose_path_used # but how is this used?
+    poses_used = read_kitti_format_poses(pose_path_used)
+
+    if eval_seq:
+        poses_for_render = dataset.gt_poses # need to guarantee gt_poses exist
+        print("Evaluate the map built by the experiment {}".format(experiment_path))
+        print("The provided frame ID is according to the used dataset at {}".format(config.pc_path))
+    else:
+        poses_for_render = poses_used
+        print("The provided frame ID is according to the pose file {}".format(pose_path_used))
+
+    if frame_range is not None:
+        frame_begin, frame_end, frame_step = frame_range
+        if frame_end == -1:
+            frame_end = len(poses_for_render)
+        poses_for_render_show = poses_for_render[frame_begin:frame_end]
+    else:
+        frame_begin, frame_end, frame_step = 0, len(poses_for_render), 1
+        poses_for_render_show = poses_for_render
+        if eval_seq:
+            print("Warning: the frame ID is according to the dataset, but the frame range is not specified, using the whole sequence")
+    
+    # reset neural points
+    if eval_seq and center_frame_id == 0: # if use dataset frame ID and do not specify the center frame ID
+        c_frame_id = frame_begin
+    else:
+        c_frame_id = center_frame_id
+    frame_count = len(poses_for_render)
+    c_frame_id = min(c_frame_id, frame_count-1)
+    
+    ref_pose = torch.tensor(poses_for_render[c_frame_id], device=config.device, dtype=config.dtype)
+    ref_position = ref_pose[:3,3]
+
+    neural_points.recreate_hash(ref_position, with_ts=False)
+
+    # mesh reconstructor
+    mesher = Mesher(config, neural_points, mlp_dict)
+
 
     cur_mesh = None
     if show_mesh:

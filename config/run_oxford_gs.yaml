@@ -21,10 +21,10 @@ sampler:
 neuralpoints:
   voxel_size_m: 0.2
   search_alpha: 0.5
-  query_nn_k: 6
   feature_dim: 32
-  color_feature_dim: 8
+  color_feature_dim: 16
   weighted_first: False
+  temporal_local_map_off: True
 decoder:
   freeze_after_frame: 30
   gs_mlp_level: 1
@@ -32,8 +32,6 @@ decoder:
 loss:
   sigma_sigmoid_m: 0.05
   weight_color: 0.0
-  loss_weight_on: False
-  dist_weight_scale: 0.8
   ekional_loss_on: True
   numerical_grad: False
   weight_e: 0.2
@@ -57,12 +55,12 @@ gs:
   n_gaussian: 8
   gs_iters: 100
   gaussian_bs_ratio: 1.0
-  img_pool_size: 60 
-  long_term_img_pool_size: 180
+  img_pool_size: 80 
+  long_term_img_pool_size: 240
   gs_down_rate: 1
   gs_vis_down_rate: 1
   gs_keyframe_accu_dist: 1.0
-  lambda_depth: 0.01
+  lambda_depth: 0.05
   lambda_normal_depth: 0.01
   lambda_opacity: 1e-3
   lambda_area: 1e-2
@@ -70,6 +68,7 @@ gs:
   lambda_sdf_cons: 0.01
   lambda_sdf_normal_cons: 0.01
   lambda_sdf: 1.0
+  min_valid_nn_k: 3
 optimizer: # mapper
   iters: 15  # iterations per frame for sdf mapping
   batch_size: 16384
@@ -78,6 +77,6 @@ optimizer: # mapper
   learning_rate_exposure: 1e-3
 eval:
   gs_eval_on: False
-  mesh_freq_frame: 5 # reconstruct the mesh every x frames
+  mesh_freq_frame: 10 # reconstruct the mesh every x frames
   mesh_min_nn: 15
-  min_cluster_vertices: 1000
+  mesh_default_on: True
