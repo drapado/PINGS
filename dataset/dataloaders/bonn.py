@@ -28,6 +28,8 @@ from pathlib import Path
 import numpy as np
 import open3d as o3d
 
+# Bonn RGB-D Dynamic Dataset: https://www.ipb.uni-bonn.de/data/rgbd-dynamic-dataset/index.html
+
 class BonnRGBDDataset:
     def __init__(self, data_dir: Path, sequence: str, *_, **__):
  

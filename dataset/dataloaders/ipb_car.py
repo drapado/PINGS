@@ -34,7 +34,7 @@ from datetime import datetime
 
 from utils.tools import get_time
 
-# for the new test data
+# Data loader for the in-house car dataset (to-be-released)
 
 class IPBCarDataset:
     def __init__(self, data_dir, cam_name: str, *_, **__):

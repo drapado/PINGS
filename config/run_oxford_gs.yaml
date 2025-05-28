@@ -36,7 +36,7 @@ loss:
   dist_weight_scale: 0.8
   ekional_loss_on: True
   numerical_grad: False
-  weight_e: 0.1
+  weight_e: 0.2
 continual:
   batch_size_new_sample: 1000
   pool_capacity: 2e7
@@ -60,10 +60,12 @@ gs:
   img_pool_size: 60 
   long_term_img_pool_size: 180
   gs_down_rate: 1
+  gs_vis_down_rate: 1
   gs_keyframe_accu_dist: 1.0
   lambda_depth: 0.01
+  lambda_normal_depth: 0.01
   lambda_opacity: 1e-3
-  lambda_area: 5e-3
+  lambda_area: 1e-2
   consist_shift_count: 1
   lambda_sdf_cons: 0.01
   lambda_sdf_normal_cons: 0.01
@@ -76,6 +78,6 @@ optimizer: # mapper
   learning_rate_exposure: 1e-3
 eval:
   gs_eval_on: False
-  mesh_freq_frame: 10 # reconstruct the mesh every x frames
+  mesh_freq_frame: 5 # reconstruct the mesh every x frames
   mesh_min_nn: 15
   min_cluster_vertices: 1000

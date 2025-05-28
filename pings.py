@@ -317,15 +317,15 @@ def run_pings(
         if config.gs_on:
             # when train gs we do not do SDF training seperately except for the first frame
             cur_iter_num = config.iters * config.init_iter_ratio if mapper.sdf_train_frame_count == 1 else 0 
-            frame_count_for_freeze_check = mapper.gs_train_frame_count
+            used_frame_count = mapper.gs_train_frame_count
         else:
             cur_iter_num = config.iters * config.init_iter_ratio if mapper.sdf_train_frame_count == 1 else config.iters
-            frame_count_for_freeze_check = mapper.sdf_train_frame_count
+            used_frame_count = mapper.sdf_train_frame_count
         if dataset.stop_status:
             cur_iter_num = max(1, cur_iter_num-10)
 
         # freeze the decoder after certain frame 
-        if not config.decoder_freezed and (frame_count_for_freeze_check == config.freeze_after_frame):
+        if not config.decoder_freezed and (used_frame_count == config.freeze_after_frame):
             freeze_decoders(mlp_dict, config)
             config.decoder_freezed = True
             neural_points.compute_feature_principle_components(down_rate = 17)
@@ -348,7 +348,7 @@ def run_pings(
         T6 = get_time()
 
         # regular saving logs (not used)
-        if config.log_freq_frame > 0 and (frame_id+1) % config.log_freq_frame == 0:
+        if config.log_freq_frame > 0 and (used_frame_count+1) % config.log_freq_frame == 0:
             dataset.write_results_log()
 
         if not config.silence:
@@ -407,7 +407,7 @@ def run_pings(
                     neural_pcd = None
                 
                     # reconstruction by marching cubes
-                    if vis_mesh_on and (frame_id == 0 or frame_id == last_frame or (frame_id+1) % vis_mesh_freq_frame == 0 or pgm.last_loop_idx == frame_id):            
+                    if vis_mesh_on and (frame_id == 0 or frame_id == last_frame or (used_frame_count+1) % vis_mesh_freq_frame == 0 or pgm.last_loop_idx == frame_id):            
                         # update map bbx
                         global_neural_pcd_down = neural_points.get_neural_points_o3d(query_global=True, random_down_ratio=31) # prime number
                         dataset.map_bbx = global_neural_pcd_down.get_axis_aligned_bounding_box()
@@ -423,7 +423,7 @@ def run_pings(
                             chunks_aabb = split_chunks(global_neural_pcd_down, aabb, vis_mesh_mc_res_m*100) # reconstruct in chunks
                             cur_mesh = mesher.recon_aabb_collections_mesh(chunks_aabb, vis_mesh_mc_res_m, None, False, config.semantic_on, config.color_on, filter_isolated_mesh=True, mesh_min_nn=vis_mesh_min_nn)    
                     
-                    if vis_sdf_on and (frame_id == 0 or frame_id == last_frame or (frame_id + 1) % vis_sdf_freq_frame == 0):
+                    if vis_sdf_on and (frame_id == 0 or frame_id == last_frame or (used_frame_count+1) % vis_sdf_freq_frame == 0):
                         sdf_bound = config.surface_sample_range_m * 4.0
                         vis_sdf_bbx = create_bbx_o3d(dataset.cur_pose_ref[:3,3], config.max_range/2)
                         cur_sdf_slice_h = mesher.generate_bbx_sdf_hor_slice(vis_sdf_bbx, dataset.cur_pose_ref[2,3] + vis_sdf_slice_height, vis_sdf_res_m, True, -sdf_bound, sdf_bound) # horizontal slice (local)

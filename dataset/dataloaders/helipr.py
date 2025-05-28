@@ -32,6 +32,10 @@ from pyquaternion import Quaternion
 
 from dataset.dataloaders import supported_file_extensions
 
+# Data loader for the HeliPR dataset
+# https://sites.google.com/view/heliprdataset
+# no image data, not used for PINGS
+
 class HeLiPRDataset:
     def __init__(self, data_dir: Path, lidar_name: str, *_, **__):
      

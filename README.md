@@ -85,6 +85,8 @@ If only depth measurements are available, you can still run PINGS with the `--gs
 
 To extract individual observations from a ROS bag, you may use the [ROS bag converter tool](https://github.com/YuePanEdward/rosbag_converter).
 
+For your own dataset, you may need to implement a new dataloader class and put it in the `dataset/dataloaders` folder.
+
 
 ## Run PINGS
 
