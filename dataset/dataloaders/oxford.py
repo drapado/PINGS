@@ -151,6 +151,8 @@ class OxfordDataset:
 
         self.mono_depth_for_high_z: bool = False
 
+        self.deskew_off = True
+
     def __getitem__(self, idx):
 
         frame_data = {}

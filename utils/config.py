@@ -297,7 +297,9 @@ class Config:
         self.gs_contribution_threshold: float = 0.1 # 1.0
 
         self.learn_color_residual: bool = False # directly learn the color or learn the residual to a base color
-
+        
+        self.valid_grad_min_thre: float = 0.4 # would be similar to reg_min_grad_norm
+        self.valid_grad_max_thre: float = 2.0 # would be similar to reg_max_grad_norm
         self.min_alpha: float = 0.05
         self.depth_min_accu_alpha: float = 0.2
         self.eval_depth_min_accu_alpha: float = 0.8
@@ -404,7 +406,7 @@ class Config:
         self.gs_vis_on: bool = True # gs visualizer
         self.visualizer_split_width_ratio: float = 0.7 # left 0.6, right 0.4
         self.vis_in_cv2: bool = False # visualize rendered view in cv2 visualizer or 3d visualizer
-        self.neural_point_vis_down_rate: int = 1 # downrate for the rendered view
+        self.neural_point_vis_down_rate: int = 7 # downrate for the neural point visualization
 
         # result saving settings
         self.save_map: bool = False # save the neural point map model and decoders or not
@@ -766,7 +768,7 @@ class Config:
             self.vis_frame_axis_len = config_args["eval"].get('vis_frame_len', self.max_range / 50.0)
 
         # associated parameters
-        self.infer_bs = self.bs * 16
+        self.infer_bs = self.bs * 8
         self.local_map_radius = min(self.max_range*1.05, self.max_range+5.0) # for the local neural points
         self.window_radius = max(self.local_map_radius+self.voxel_size_m*2, 6.0) # for the sampling data pool, should not be too small
         self.sorrounding_map_radius = self.local_map_radius * 1.4

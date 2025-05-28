@@ -71,7 +71,7 @@ $ python3 pings.py ./config/run_ipbcar_gs.yaml ipb_car -i ./data/ipb_car/ipbcar_
 $ python3 pings.py ./config/run_oxford_gs.yaml oxford -i ./data/Oxford-Spires-Dataset/xxx/ -vs
 
 # Run on KITTI example sequence
-$ python3 pings.py ./config/run_kitti_gs.yaml kitti 00 -i ./data/kitti_example/ -vs --no-deskew
+$ python3 pings.py ./config/run_kitti_gs.yaml kitti 00 -i ./data/kitti_example/ -vs
 
 """
 
@@ -499,7 +499,6 @@ def run_pings(
         neural_points.sorrounding_map_radius = 2.0 * config.local_map_radius
         mapper.gs_eval_offline(None, q_vis2main, 
                                eval_down_rate=config.gs_vis_down_rate, 
-                               skip_begin_count=10,
                                skip_end_count=10, 
                                lpips_eval_on=True, 
                                pc_cd_eval_on=config.rendered_pc_eval_on, 

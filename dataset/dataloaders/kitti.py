@@ -117,6 +117,8 @@ class KITTIOdometryDataset:
                 self.poses_fn = os.path.join(data_dir, f"poses/{self.sequence_id}.txt")
                 
             self.gt_poses = self.load_poses(self.poses_fn)
+        
+        self.deskew_off = True
 
     def __getitem__(self, idx):
         

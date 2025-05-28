@@ -671,7 +671,7 @@ class Mapper:
                 self.train_cam_uid.append(cur_view_cam.uid)
             
             # range filter
-            view_range = 0.5 * (self.config.sorrounding_map_radius + self.config.max_range)
+            view_range = 0.95 * self.config.sorrounding_map_radius
             self.cam_long_term_train_pool = [cam_long_term for cam_long_term in self.cam_long_term_train_pool \
              if (torch.norm(self.used_poses[cam_long_term.frame_id,:3,3]-self.used_poses[frame_id,:3,3], 2) \
                 < view_range)] 
@@ -1449,7 +1449,7 @@ class Mapper:
                         # print(grad_norm)
                         # print("Mean SDF grad norm:", grad_norm.mean().item()) # why there are more and more 0 here
                         # Only apply consistency loss for those gaussians with valid sdf gradient
-                        valid_grad_mask = (grad_norm < 1.5) & (grad_norm > 0.5) & (valid_nnk_mask)
+                        valid_grad_mask = (grad_norm < self.config.valid_grad_max_thre) & (grad_norm > self.config.valid_grad_min_thre) & (valid_nnk_mask)
                         valid_grad_mask_no_shift = valid_grad_mask[:sampled_count] # the original gaussian samples (without shift)
 
                         # valid_opacity_loss = (1.0 - sampled_guassians_alpha[valid_grad_mask_no_shift].mean()) 
@@ -1564,6 +1564,7 @@ class Mapper:
                         "loss/gaussian_area_loss": area_loss,
                         "loss/opacity_loss": opacity_loss,
                         "loss/opacity_entropy_loss": opacity_ent_loss,
+                        "loss/invalid_opacity_loss": invalid_opacity_loss,
                         "loss/sdf_loss": sdf_loss,
                         "loss/eikonal_loss": eikonal_loss,
                         "loss/color_loss": color_loss,
@@ -1605,8 +1606,7 @@ class Mapper:
                 #     print(" SDF loss             iter time (ms):", (T6-T5)*1e3) 
                 #     print(" Backward propagation iter time (ms):", (T7-T6)*1e3) # still, this backpropagation is slow, but better to do this in batch
 
-            # self.neural_points.assign_local_gaussians_to_global() # set back gaussians (and also neural points), better don't do it twice
-            self.neural_points.assign_local_to_global() # set back pin feature
+            self.neural_points.assign_local_to_global()
             
             # initialize new neural points from the shifted position of the spawned gaussians
             # this is deprecated
@@ -1632,7 +1632,7 @@ class Mapper:
         return 
 
     def check_invalid_neural_points(self, stability_threshold = 1.0, 
-            render_min_nn_count: int = 5):
+            render_min_nn_count: int = 6):
 
         with torch.no_grad():  # eval step
             local_neural_points = self.neural_points.local_neural_points

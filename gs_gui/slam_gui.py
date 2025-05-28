@@ -243,12 +243,12 @@ class SLAM_GUI:
         # trajectory
         self.traj_render = rendering.MaterialRecord()
         self.traj_render.shader = "unlitLine"
-        self.traj_render.line_width = 6 * self.window.scaling  # note that this is scaled with respect to pixels,
+        self.traj_render.line_width = 4 * self.window.scaling  # note that this is scaled with respect to pixels,
 
         # cur frame frustrum
         self.cur_frame_render = rendering.MaterialRecord()
         self.cur_frame_render.shader = "unlitLine"
-        self.cur_frame_render.line_width = 4 * self.window.scaling
+        self.cur_frame_render.line_width = 3 * self.window.scaling
 
         # train frame frustrum
         self.train_frame_render = rendering.MaterialRecord()
@@ -624,7 +624,7 @@ class SLAM_GUI:
             slider_label_down_rate = gui.Label("Render Image Downsample Rate (0-3)")
             self.scaling_slider_downrate = gui.Slider(gui.Slider.INT)
             self.scaling_slider_downrate.set_limits(0, 3)
-            self.scaling_slider_downrate.int_value = 0
+            self.scaling_slider_downrate.int_value = self.config.gs_vis_down_rate
             slider_tile_down_rate.add_child(slider_label_down_rate)
             slider_tile_down_rate.add_child(self.scaling_slider_downrate)
             gs_vis_collapse.add_child(slider_tile_down_rate)
@@ -1930,7 +1930,7 @@ class SLAM_GUI:
             
             point_count = data_packet.neural_points_data["count"]
             if point_count > 300000 and not self.local_map_chbox.checked:
-                neural_point_vis_down_rate = find_closest_prime(point_count // 200000)
+                neural_point_vis_down_rate = max(neural_point_vis_down_rate, find_closest_prime(point_count // 200000))
 
             if local_mask is not None and self.local_map_chbox.checked:
                 neural_point_position = data_packet.neural_points_data["position"][local_mask]

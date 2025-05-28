@@ -94,7 +94,9 @@ def inspect_pings_map(
     tsdf_fusion_max_range_m: float = typer.Option(-1, "--tsdf-fusion-max-range-m", help='Maximum range for doing the TSDF fusion'),
     neural_point_vis_down_rate: int = typer.Option(17, "--neural-point-vis-down-rate", help='Down rate for visualizing the neural points'),
     render_down_rate: int = typer.Option(-1, "--render-down-rate", help='Down rate of image resolution for rendering'),
-    normal_with_alpha: bool = typer.Option(False, "--normal-with-alpha", help='Show the normal with alpha channel')
+    normal_with_alpha: bool = typer.Option(False, "--normal-with-alpha", help='Show the normal with alpha channel'),
+    show_neural_point: bool = typer.Option(False, "--show-neural-point", "-n", help='Show the neural points by default'),
+    show_gs: bool = typer.Option(True, "--show-gs/--show-gs-off", help='Show the GS rendering by default'),
 ):
 
     yaml_files = glob.glob(f"{experiment_path}/*.yaml")
@@ -243,6 +245,7 @@ def inspect_pings_map(
     mesher = Mesher(config, neural_points, mlp_dict)
 
     vis_sequence_on = (render_video or recon_3d or eval_seq or view_stream)
+    still_view_on = (not vis_sequence_on) or show_neural_point
 
     # GS visualizer
     q_main2vis = q_vis2main = None
@@ -257,15 +260,15 @@ def inspect_pings_map(
             q_main2vis=q_main2vis,
             q_vis2main=q_vis2main,
             config=config,
-            gs_default_on=True,
+            gs_default_on=show_gs,
             robot_default_on=False,
-            neural_point_map_default_on=False,
+            neural_point_map_default_on=show_neural_point,
             local_map_default_on=(not show_global),
-            mesh_default_on=True,
-            neural_point_color_default_mode=neural_point_color_mode, # 0: original rgb, 1: geo feature pca, 2: photo feature pca, 3: time, 4: stability
+            mesh_default_on=show_mesh,
+            neural_point_color_default_mode=neural_point_color_mode, # 0: original rgb, 1: geo feature pca, 2: photo feature pca, 3: time
             neural_point_vis_down_rate=neural_point_vis_down_rate, # better to be a prime number
             frustum_size=config.vis_frame_axis_len,
-            still_view_default_on=(not vis_sequence_on)
+            still_view_default_on=still_view_on
         )
 
         gui_process = mp.Process(target=slam_gui.run, args=(params_gui,))
@@ -319,6 +322,7 @@ def inspect_pings_map(
             mlp_dict,
             poses_for_render, 
             cam_names, 
+            vis_global_on=show_global,
             recon_3d_on=recon_3d, 
             recon_3d_tsdf_on=False, 
             eval_on=eval_seq,
@@ -346,6 +350,7 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                       cam_list: List[str],
                       video_save_base_path: str = None,
                       vis_on: bool = False,
+                      vis_global_on: bool = False,
                       recon_3d_on: bool = True,
                       recon_3d_tsdf_on: bool = False,
                       eval_on: bool = False,
@@ -823,7 +828,7 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                 current_frames=dataset.cur_cam_img, 
                 img_down_rate=eval_down_rate)
             
-            packet_to_vis.add_neural_points_data(neural_points, only_local_map=True)
+            packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not vis_global_on))
             
             if cur_frame_measured_pcd_o3d is not None:
                 packet_to_vis.add_scan(np.array(cur_frame_measured_pcd_o3d.points, dtype=np.float64), 
@@ -840,6 +845,7 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
 
             if not q_vis2main.empty():
                 control_packet: ControlPacket = get_latest_queue(q_vis2main)
+                vis_global_on = control_packet.flag_global
                 while control_packet.flag_pause:
                     time.sleep(0.1)
                     if not q_vis2main.empty():

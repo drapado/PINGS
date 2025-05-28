@@ -115,7 +115,9 @@ class SLAMDataset():
                 self.intrinsics_o3d = self.loader.intrinsics_o3d
         if hasattr(self.loader, "is_rgbd"):
             self.is_rgbd = self.loader.is_rgbd
-
+        if hasattr(self.loader, "deskew_off"):
+            self.config.deskew = False
+            
         if config.color_channel == 3:
             self.loader.load_img = True
             if self.monodepth_on:

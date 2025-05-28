@@ -79,7 +79,8 @@ pip3 install -r requirements.txt
 
 ## Data Preparation
 
-A dataset with both RGB and depth observations (LiDAR or depth camera) with extrinsic and intrinsic calibration parameters is required. 
+A dataset with both RGB and depth observations (LiDAR or depth camera) with extrinsic and intrinsic calibration parameters is required. Note that the input images are supposed to have been already undistorted.
+
 If only depth measurements are available, you can still run PINGS with the `--gs-off` flag while PINGS would degenerate to [PIN-SLAM](https://github.com/PRBonn/PIN_SLAM).
 
 To extract individual observations from a ROS bag, you may use the [ROS bag converter tool](https://github.com/YuePanEdward/rosbag_converter).

@@ -9,12 +9,12 @@ process:
   min_range_m: 1.5
   max_range_m: 60.0
   vox_down_m: 0.08
-  dynamic_sdf_ratio_thre: 0.6
+  dynamic_sdf_ratio_thre: 0.5
 sampler:
   surface_sample_range_m: 0.3
   surface_sample_n: 4
   free_sample_begin_ratio: 0.3
-  free_front_sample_n: 2
+  free_front_sample_n: 4
 neuralpoints:
   voxel_size_m: 0.25 # 0.2 # 0.3
   search_alpha: 0.8
@@ -47,8 +47,8 @@ gs:
   affine_exposure_correction: True 
   cam_pose_train_on: False
   eval_cam_refine_on: False
-  view_concat_on: False
-  # dist_concat_on: True
+  view_concat_on: True
+  dist_concat_on: False
   learn_color_residual: False
   n_gaussian: 8
   gs_iters: 100
@@ -69,7 +69,7 @@ gs:
   lambda_sdf: 0.5
   unit_scale_ratio: 0.2
   max_scale_ratio: 1.0
-  displacement_range_ratio: 1.0
+  displacement_range_ratio: 2.0
 optimizer:
   iters: 15 # sdf mapping iterations per frame
   batch_size: 8192
@@ -80,4 +80,4 @@ eval:
   gs_eval_on: True
   sensor_cad_path: ./cad/ipb_car.ply
   mesh_freq_frame: 10 # reconstruct the mesh every x frames
-  mesh_min_nn: 15
+  mesh_min_nn: 19

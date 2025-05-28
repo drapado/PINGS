@@ -1055,7 +1055,7 @@ def deskewing(
         T_l_lm_list: contain the inter-LiDAR calibrations, the transformation from the main LiDAR to the other LiDAR  
         ts_diff_list: contain the timestamp shift from the other LiDAR to the main LiDAR in ratio
     """  
-
+    # print("Applying deskewing")
     # ts_ref_pose =  (ts_ref - ts_min) / (ts_max - ts_min)
 
     if ts is None:

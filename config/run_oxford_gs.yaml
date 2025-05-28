@@ -53,31 +53,29 @@ gs:
   view_concat_on: True
   dist_concat_on: False
   learn_color_residual: False
-  cam_pose_train_on: False
+  cam_pose_train_on: True
   n_gaussian: 8
   gs_iters: 100
   gaussian_bs_ratio: 1.0
-  img_pool_size: 40 
-  long_term_img_pool_size: 120
+  img_pool_size: 60 
+  long_term_img_pool_size: 180
   gs_down_rate: 1
   gs_keyframe_accu_dist: 1.0
-  inverse_depth_loss: False
   lambda_depth: 0.01
   lambda_opacity: 1e-3
-  lambda_area: 1e-4
+  lambda_area: 5e-3
   consist_shift_count: 1
   lambda_sdf_cons: 0.01
   lambda_sdf_normal_cons: 0.01
   lambda_sdf: 1.0
-  min_alpha: 0.1
 optimizer: # mapper
   iters: 15  # iterations per frame for sdf mapping
   batch_size: 16384
-  learning_rate_geo: 0.002
-  learning_rate_color: 0.002
+  learning_rate_geo: 2e-3
+  learning_rate_color: 2e-3
   learning_rate_exposure: 1e-3
 eval:
   gs_eval_on: False
   mesh_freq_frame: 10 # reconstruct the mesh every x frames
-  mesh_min_nn: 14
+  mesh_min_nn: 15
   min_cluster_vertices: 1000
