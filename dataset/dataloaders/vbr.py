@@ -32,6 +32,8 @@ import yaml
 from datetime import datetime
 
 # VBR dataset in kitti-like format
+# Download from: https://rvp-group.net/slam-dataset.html
+# Devkit: https://github.com/rvp-group/vbr-devkit
 
 class VBRDataset:
     def __init__(self, data_dir, *_, **__):

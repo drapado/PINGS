@@ -47,11 +47,6 @@ def setup_experiment(config: Config, argv=None, debug_mode: bool = False):
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
     warnings.filterwarnings("ignore", category=FutureWarning) 
 
-    run_name = config.name + "_" + ts  # modified to a name that is easier to index
-    config.run_name = run_name
-
-    run_path = os.path.join(config.output_root, run_name)
-
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("No CUDA device available, use CPU instead")
@@ -65,7 +60,15 @@ def setup_experiment(config: Config, argv=None, debug_mode: bool = False):
     # set the random seed for all
     seed_anything(config.seed)
 
+    run_path = None
+
     if not debug_mode:
+
+        run_name = config.name + "_" + ts  # modified to a name that is easier to index
+        config.run_name = run_name
+
+        run_path = os.path.join(config.output_root, run_name)
+
         access = 0o755
         os.makedirs(run_path, access, exist_ok=True)
         assert os.access(run_path, os.W_OK)

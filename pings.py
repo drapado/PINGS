@@ -68,7 +68,7 @@ docstring = f"""
 $ python3 pings.py ./config/run_ipbcar_gs.yaml ipb_car -i ./data/ipb_car/ipbcar_test_subset/ -vs
 
 # Run on Oxford Spires dataset
-$ python3 pings.py ./config/run_oxford_gs.yaml oxford -i ./data/Oxford-Spires-Dataset/xxx/ -vs
+$ python3 pings.py ./config/run_oxford_gs.yaml oxford -i ./data/Oxford-Spires-Dataset/xxx/ -vsm
 
 # Run on KITTI example sequence
 $ python3 pings.py ./config/run_kitti_gs.yaml kitti 00 -i ./data/kitti_example/ -vs

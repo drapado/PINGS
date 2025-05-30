@@ -37,7 +37,6 @@ gs:
   learn_color_residual: True
   cam_pose_train_on: True
   view_concat_on: True
-  dist_concat_on: False
   gs_iters: 20
   gaussian_bs_ratio: 2.0
   img_pool_size: 20
@@ -53,7 +52,6 @@ gs:
   lambda_sdf_cons: 0.02
   lambda_sdf_normal_cons: 0.02
   lambda_sdf: 1.0
-  min_alpha: 0.05
 continual:
   batch_size_new_sample: 3000
   pool_capacity: 1e7

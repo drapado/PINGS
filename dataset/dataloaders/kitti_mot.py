@@ -33,8 +33,6 @@ import open3d as o3d
 # https://www.cvlibs.net/datasets/kitti/setup.php
 # https://www.cvlibs.net/datasets/kitti/eval_tracking.php # KITTI MOT dataset
 
-# TODO
-
 class KITTIMOTDataset:
     def __init__(self, data_dir, sequence: str, *_, **__):
         

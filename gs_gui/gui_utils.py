@@ -390,6 +390,7 @@ class ParamsGUI:
         local_map_default_on: bool = True,
         still_view_default_on: bool = True,
         robot_default_on: bool = True,
+        follow_cam_default_on: bool = True,
         neural_point_map_default_on: bool = False,
         mesh_default_on: bool = False,
         sdf_default_on: bool = False,
@@ -408,6 +409,7 @@ class ParamsGUI:
         self.gs_default_on = gs_default_on
         self.local_map_default_on = local_map_default_on
         self.still_view_default_on = still_view_default_on
+        self.follow_cam_default_on = follow_cam_default_on
         self.robot_default_on = robot_default_on
         self.neural_point_map_default_on = neural_point_map_default_on
         self.mesh_default_on = mesh_default_on

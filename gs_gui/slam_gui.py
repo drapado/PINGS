@@ -122,6 +122,7 @@ class SLAM_GUI:
             self.frustum_size = params_gui.frustum_size
             self.local_map_default_on = params_gui.local_map_default_on
             self.still_view_default_on = params_gui.still_view_default_on
+            self.follow_cam_default_on = params_gui.follow_cam_default_on
             
         if self.config is not None:
             seed_anything(self.config.seed)
@@ -235,7 +236,8 @@ class SLAM_GUI:
 
         # mesh 
         self.mesh_render = rendering.MaterialRecord()
-        self.mesh_render.shader = "normals" # "defaultLit"
+        # self.mesh_render.shader = "defaultLit"
+        self.mesh_render.shader = "normals"
 
         # trajectory
         self.traj_render = rendering.MaterialRecord()
@@ -350,7 +352,7 @@ class SLAM_GUI:
         viewpoint_tile.add_child(self.local_map_chbox)
         
         self.followcam_chbox = gui.Checkbox("Follow")
-        self.followcam_chbox.checked = True
+        self.followcam_chbox.checked = self.follow_cam_default_on
         viewpoint_tile.add_child(self.followcam_chbox)
 
         self.staybehind_chbox = gui.Checkbox("Behind")
@@ -366,6 +368,10 @@ class SLAM_GUI:
         self.fly_chbox.checked = False
         self.fly_chbox.set_on_checked(self._set_mouse_mode)
         viewpoint_tile.add_child(self.fly_chbox)
+
+        # self.bev_chbox = gui.Checkbox("BEV")
+        # self.bev_chbox.checked = False
+        # viewpoint_tile.add_child(self.bev_chbox)
         
         collapse_view.add_child(viewpoint_tile)
 
@@ -1477,16 +1483,8 @@ class SLAM_GUI:
             if data_packet.frame_id is not None:
                 self.frame_info.text = "Frame: {}".format(data_packet.frame_id)
                     
-            if data_packet.has_neural_points:
-                self.neural_points_info.text = "# Neural points: {} (local {}) [PINGS Map size: {:.1f} MB]".format(
-                    data_packet.neural_points_data["count"],
-                    data_packet.neural_points_data["local_count"],
-                    data_packet.neural_points_data["map_memory_mb"]
-                )
-                # done every time, could be a bit time consuming here
-                self.visualize_neural_points()
+            self.visualize_neural_points()
                
-
             if data_packet.has_sorrounding_points:
                 # print("Spawn surrounding points")
 
@@ -1680,6 +1678,9 @@ class SLAM_GUI:
                         online_eval_on: bool = True, 
                         show_depth_error: bool = False,
                         alpha_foreground: float = 0.7):
+        
+        if not self.config.gs_on:
+            return
 
         if self.cur_data_packet.current_frames is None:
             return 
@@ -1913,11 +1914,18 @@ class SLAM_GUI:
         if data_packet is None:
             return
         
-        if self.neural_point_chbox.checked or (not self.init):
+        if (self.neural_point_chbox.checked or (not self.init)) and data_packet.has_neural_points:
+
+            neural_point_vis_down_rate = self.neural_point_vis_down_rate
 
             dict_keys = list(data_packet.neural_points_data.keys())
 
-            neural_point_vis_down_rate = self.neural_point_vis_down_rate
+            if "count" in dict_keys and "local_count" in dict_keys and "map_memory_mb" in dict_keys:
+                self.neural_points_info.text = "# Neural points: {} (local {}) [PINGS Map size: {:.1f} MB]".format(
+                        data_packet.neural_points_data["count"],
+                        data_packet.neural_points_data["local_count"],
+                        data_packet.neural_points_data["map_memory_mb"]
+                    )
 
             local_mask = None
             # global map is being loaded here
@@ -2068,11 +2076,9 @@ class SLAM_GUI:
                 mesh_verts_colors_np = color_map(z_normalized)[:, :3].astype(np.float64)
                 self.mesh.vertex_colors = o3d.utility.Vector3dVector(mesh_verts_colors_np)
 
-        # if self.ego_chbox.checked:
-        #     self.mesh.transform(np.linalg.inv(self.cur_pose))
+            self.widget3d.scene.remove_geometry(self.mesh_name)
+            self.widget3d.scene.add_geometry(self.mesh_name, self.mesh, self.mesh_render) 
 
-        self.widget3d.scene.remove_geometry(self.mesh_name)
-        self.widget3d.scene.add_geometry(self.mesh_name, self.mesh, self.mesh_render) 
         self.widget3d.scene.show_geometry(self.mesh_name, self.mesh_chbox.checked)
 
     def visualize_sdf_slice(self, data_packet = None):

@@ -30,7 +30,7 @@ def tukey_loss(network_output, gt, c=4.685):
         loss = abs_residuals # this is just l1 loss
     return loss.mean()
 
-# GM robust kernel (TODO)
+# GM robust kernel
 def gm_loss(network_output, gt, c=0.1):
     residuals = network_output - gt 
     abs_residuals = torch.abs(residuals)

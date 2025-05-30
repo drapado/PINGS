@@ -114,11 +114,15 @@ def inspect_pings_map(
     full_config_path = os.path.join(experiment_path, "meta", "config_all.yaml")
     config.model_path = model_path
 
+    config.silence = not log_on
+    config.gs_on = show_gs
+
     if os.path.exists(full_config_path):
         full_config_args = yaml.safe_load(open(full_config_path))
         config.pc_path = full_config_args["pc_path"]
         config.data_loader_name = full_config_args["data_loader_name"]
         config.data_loader_seq = full_config_args["data_loader_seq"]
+        config.run_name = full_config_args["run_name"]
         # print("Please make sure the default values of configurations are not changed for the run")
         config.displacement_range_ratio = full_config_args["displacement_range_ratio"]
         config.max_scale_ratio = full_config_args["max_scale_ratio"]
@@ -197,8 +201,9 @@ def inspect_pings_map(
             pose_path_used = os.path.join(experiment_path, "gt_poses_kitti.txt")
     else:
         pose_path_used = pose_path
-
-    vis_sequence_on = (render_video or recon_3d or eval_seq or (frame_range is not None))
+    
+    render_on = (render_video or recon_3d or eval_seq)
+    vis_sequence_on = render_on or (frame_range is not None)
     still_view_on = (not vis_sequence_on) or show_neural_point
 
     mp.set_start_method("spawn") # don't forget this
@@ -220,6 +225,7 @@ def inspect_pings_map(
             robot_default_on=False,
             neural_point_map_default_on=show_neural_point,
             local_map_default_on=(not show_global),
+            follow_cam_default_on=True,
             mesh_default_on=show_mesh,
             neural_point_color_default_mode=neural_point_color_mode, # 0: original rgb, 1: geo feature pca, 2: photo feature pca, 3: time
             neural_point_vis_down_rate=neural_point_vis_down_rate, # better to be a prime number
@@ -293,6 +299,7 @@ def inspect_pings_map(
         print("Marching cubes resolution: {:.2f} m".format(mesh_vox_size_m))
         if log_on:
             print("mesh_min_nn:", mesh_min_nn_k_used)
+        print("It may take a while to reconstruct the mesh")
 
         out_mesh_path = None
         cur_mesh = mesher.recon_aabb_collections_mesh(chunks_aabb, mesh_vox_size_m, out_mesh_path, False, False, \
@@ -300,7 +307,7 @@ def inspect_pings_map(
 
     if visualize:
         packet_to_vis: VisPacket = VisPacket(frame_id=c_frame_id, img_down_rate=config.gs_vis_down_rate)
-        packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not show_global), pca_color_on=True)
+        packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not show_global))
         # if not the same, then gt_poses as in-sequence views, slam_poses as the out-of-sequence views
         packet_to_vis.add_traj(gt_poses=np.array(poses_used), slam_poses=np.array(poses_for_render_show))
         
@@ -308,6 +315,8 @@ def inspect_pings_map(
             packet_to_vis.add_mesh(np.array(cur_mesh.vertices, dtype=np.float64), np.array(cur_mesh.triangles), np.array(cur_mesh.vertex_colors, dtype=np.float64))
         
         q_main2vis.put(packet_to_vis)
+
+        time.sleep(5)
     
     cam_names = dataset.cam_names 
     if use_free_view_camera: 
@@ -325,8 +334,10 @@ def inspect_pings_map(
             recon_3d_on=recon_3d, 
             recon_3d_tsdf_on=False, 
             eval_on=eval_seq,
+            render_on=render_on,
+            mesh_to_vis=cur_mesh,
             video_save_base_path=video_folder_path, 
-            mesh_save_base_path=mesh_folder_path,
+            tsdf_mesh_save_base_path=mesh_folder_path,
             gs_eval_output_csv_path=gs_eval_output_csv_path,
             eval_down_rate=config.gs_vis_down_rate,
             tsdf_fusion_max_range=tsdf_fusion_max_range_m,
@@ -348,12 +359,14 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                       view_poses: Dict[str, np.array], 
                       cam_list: List[str],
                       video_save_base_path: str = None,
+                      tsdf_mesh_save_base_path: str = None,
                       vis_on: bool = False,
                       vis_global_on: bool = False,
                       recon_3d_on: bool = True,
                       recon_3d_tsdf_on: bool = False,
                       eval_on: bool = False,
-                      mesh_save_base_path: str = None,
+                      render_on: bool = True,
+                      mesh_to_vis: o3d.geometry.TriangleMesh = None,
                       gs_eval_output_csv_path: str = None,
                       eval_down_rate: int = 0, 
                       normal_in_world_frame: bool = True,
@@ -660,20 +673,23 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                         break     
 
             # current values
-            render_pkg = render(cur_view_cam, None, neural_points_data, 
-                decoders, sorrounding_spawn_results, background, 
-                down_rate=eval_down_rate, 
-                dist_concat_on=config.dist_concat_on, 
-                view_concat_on=config.view_concat_on, 
-                correct_exposure=config.exposure_correction_on, 
-                correct_exposure_affine = config.affine_exposure_correction,
-                learn_color_residual=config.learn_color_residual,
-                front_only_on=config.train_front_only,
-                gs_type=config.gs_type,
-                displacement_range_ratio=config.displacement_range_ratio,
-                max_scale_ratio=config.max_scale_ratio,
-                unit_scale_ratio=config.unit_scale_ratio,
-                verbose=False)
+            if render_on:
+                render_pkg = render(cur_view_cam, None, neural_points_data, 
+                    decoders, sorrounding_spawn_results, background, 
+                    down_rate=eval_down_rate, 
+                    dist_concat_on=config.dist_concat_on, 
+                    view_concat_on=config.view_concat_on, 
+                    correct_exposure=config.exposure_correction_on, 
+                    correct_exposure_affine = config.affine_exposure_correction,
+                    learn_color_residual=config.learn_color_residual,
+                    front_only_on=config.train_front_only,
+                    gs_type=config.gs_type,
+                    displacement_range_ratio=config.displacement_range_ratio,
+                    max_scale_ratio=config.max_scale_ratio,
+                    unit_scale_ratio=config.unit_scale_ratio,
+                    verbose=False)
+            else:
+                render_pkg = None
 
             
             # rendered results
@@ -823,11 +839,14 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
 
         if vis_on:
             # add the eval frame to vis
+            frames_to_vis = dataset.cur_cam_img
+
             packet_to_vis= VisPacket(frame_id=frame_id,
-                current_frames=dataset.cur_cam_img, 
+                current_frames=frames_to_vis, 
                 img_down_rate=eval_down_rate)
-            
-            packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not vis_global_on))
+
+            if render_on:
+                packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not vis_global_on))
             
             if cur_frame_measured_pcd_o3d is not None:
                 packet_to_vis.add_scan(np.array(cur_frame_measured_pcd_o3d.points, dtype=np.float64), 
@@ -836,6 +855,11 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
             if cur_frame_rendered_pcd_o3d is not None:
                 packet_to_vis.add_rendered_scan(np.array(cur_frame_rendered_pcd_o3d.points, dtype=np.float64), 
                                                 np.array(cur_frame_rendered_pcd_o3d.colors, dtype=np.float64))
+            
+            # if mesh_to_vis is not None:
+            #     packet_to_vis.add_mesh(np.array(mesh_to_vis.vertices, dtype=np.float64), 
+            #                             np.array(mesh_to_vis.triangles), 
+            #                             np.array(mesh_to_vis.vertex_colors, dtype=np.float64))
             
             poses_for_show = view_poses_np[frame_begin:frame_id+1]
             packet_to_vis.add_traj(slam_poses = poses_for_show)
@@ -935,8 +959,8 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
         mesh_tsdf_fusion.compute_vertex_normals()
 
         # save the mesh
-        if mesh_save_base_path is not None:
-            mesh_path = os.path.join(mesh_save_base_path, "mesh_tsdf_fusion_{}cm.ply".format(str(round(tsdf_fusion_voxel_size*1e2))))
+        if tsdf_mesh_save_base_path is not None:
+            mesh_path = os.path.join(tsdf_mesh_save_base_path, "mesh_tsdf_fusion_{}cm.ply".format(str(round(tsdf_fusion_voxel_size*1e2))))
             o3d.io.write_triangle_mesh(mesh_path, mesh_tsdf_fusion)
             print("Save the mesh results from TSDF fusion to {}".format(mesh_path))
 

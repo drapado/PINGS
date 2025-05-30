@@ -61,9 +61,9 @@ continual: # the data sample pool
 #   # photo_weight: 0.1
 #   source_vox_down_m: 0.02
 #   iter_n: 50
-#   min_grad_norm: 0.5 # 0.5
-#   max_grad_norm: 2.0 # 2.0
-#   GM_grad: 0.4 # TODO
+#   min_grad_norm: 0.5
+#   max_grad_norm: 2.0
+#   GM_grad: 0.4
 #   GM_dist: 0.05
 #   eigenvalue_check: False
 optimizer:
@@ -73,8 +73,7 @@ optimizer:
   learning_rate_color: 2e-3
   learning_rate_exposure: 1e-3
 eval:
-  gs_eval_on: True
   mesh_freq_frame: 10
   mesh_min_nn: 19
-  skip_top_voxel: 0
+  skip_top_voxel: 2
   vis_frame_len: 0.1

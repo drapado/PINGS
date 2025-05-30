@@ -44,7 +44,7 @@ class NuScenesDataset:
             print('run "pip install nuscenes-devkit"')
             sys.exit(1)
 
-        # TODO: If someone needs more splits from nuScenes expose this 2 parameters
+        # NOTE: If someone needs more splits from nuScenes expose this 2 parameters
         #  nusc_version: str = "v1.0-trainval"
         #  split: str = "train"
         nusc_version: str = "v1.0-mini"
