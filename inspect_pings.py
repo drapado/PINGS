@@ -229,7 +229,7 @@ def inspect_pings_map(
             mesh_default_on=show_mesh,
             neural_point_color_default_mode=neural_point_color_mode, # 0: original rgb, 1: geo feature pca, 2: photo feature pca, 3: time
             neural_point_vis_down_rate=neural_point_vis_down_rate, # better to be a prime number
-            frustum_size=config.vis_frame_axis_len,
+            frustum_size=config.vis_frame_axis_len*2.0,
             still_view_default_on=still_view_on
         )
 
@@ -239,7 +239,6 @@ def inspect_pings_map(
 
     # dataset
     dataset = SLAMDataset(config)
-    # print(dataset.cam_names)
 
     config.pose_path = pose_path_used # but how is this used?
     poses_used = read_kitti_format_poses(pose_path_used)

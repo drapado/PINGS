@@ -15,22 +15,30 @@
 ![teaser](https://github.com/user-attachments/assets/0ec8b71d-8902-445c-a07c-f9a7e08fb3e2)
 
 <details>
-  <summary>[Demo videos (click to expand)]</summary>
+  <summary>[**Demo videos** (click to expand)]</summary>
 
-| SLAM example 1 | SLAM example 2 | Render from Map |
-| :-: | :-: | :-: |
-| <video src='https://github.com/user-attachments/assets/d4de3d86-589d-4f84-ad30-102fdac9fb53'> | <video src='https://github.com/user-attachments/assets/332c8633-6ff6-4dc2-bd42-19944cc8cfed'> | <video src='https://github.com/user-attachments/assets/acbacfdb-1f8f-4447-905a-5abd7ae80a62'> |
+
+### Rendering from PINGS map of Bonn
+
+| example 1 | example 2 |
+| :-: | :-: |
+| <video src='https://github.com/user-attachments/assets/bff4c53a-a5b8-4912-86af-7cb1bfa4248f'> | <video src='https://github.com/user-attachments/assets/a8e5be1c-bc64-4f39-92b1-31a6eea48b25'> |
+
+| example 3 | example 4 |
+| :-: | :-: |
+| <video src='https://github.com/user-attachments/assets/f7f69d77-9b67-4cf0-a491-f57f96f6f940'> | <video src='https://github.com/user-attachments/assets/a6733384-39ff-443a-a26e-66429bf5cf4e'> |
+
+
+### SLAM demo
+
+| HKU | KITTI |
+| :-: | :-: |
+| <video src='https://github.com/user-attachments/assets/d4de3d86-589d-4f84-ad30-102fdac9fb53'> | <video src='https://github.com/user-attachments/assets/332c8633-6ff6-4dc2-bd42-19944cc8cfed'> | 
+
 
 </details>
 
-
-
-
-
 ----
-
-🚧 **Repo under construction** 🚧
-
 
 ## Abstract
 
@@ -120,8 +128,8 @@ If you use PINGS for any academic work, please cite our original [paper](https:/
 
 ```
 @inproceedings{pan2025rss,
-author = {Y. Pan and X. Zhong and L. Jin and L. Wiesmann and M. Popovi\'c and J. Behley and C. Stachniss},
 title = {{PINGS: Gaussian Splatting Meets Distance Fields within a Point-Based Implicit Neural Map}},
+author = {Y. Pan and X. Zhong and L. Jin and L. Wiesmann and M. Popovi\'c and J. Behley and C. Stachniss},
 booktitle= {Robotics: Science and Systems (RSS)},
 year = {2025},
 codeurl = {https://github.com/PRBonn/PINGS},

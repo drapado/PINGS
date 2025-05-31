@@ -415,7 +415,7 @@ class Config:
         self.save_mesh: bool = False # save the reconstructed mesh map or not
 
         # GS evaluation
-        self.gs_eval_on: bool = True 
+        self.gs_eval_on: bool = False 
         self.rendered_pc_eval_on: bool = False
 
         # ROS related 
