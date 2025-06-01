@@ -15,7 +15,7 @@
 ![teaser](https://github.com/user-attachments/assets/0ec8b71d-8902-445c-a07c-f9a7e08fb3e2)
 
 <details>
-  <summary>[**Demo videos** (click to expand)]</summary>
+  <summary>[Demo videos (click to expand)]</summary>
 
 
 ### Rendering from PINGS map of Bonn
@@ -137,6 +137,12 @@ url = {https://www.ipb.uni-bonn.de/wp-content/papercite-data/pdf/pan2025rss.pdf}
 }
 ```
 </details>
+
+## Contact
+If you have any questions, please contact:
+
+- [Yue Pan](https://www.ipb.uni-bonn.de/people/yue-pan/index.html) {[yue.pan@igg.uni-bonn.de]()}
+
 
 ## Acknowledgement
 

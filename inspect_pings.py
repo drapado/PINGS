@@ -66,6 +66,9 @@ $ python3 inspect_pings.py ./pings_experiments/your_experiment_path
 # Inspect the GS map and also the mesh 
 $ python3 inspect_pings.py ./pings_experiments/your_experiment_path -m
 
+# Inspect the GS map along the trajectory with a interval of 2 frames
+$ python3 inspect_pings.py ./pings_experiments/your_experiment_path --range 0 2000 2
+
 # Inspect the GS map along the trajectory and render the video with an interval of 5 frames
 $ python3 inspect_pings.py ./pings_experiments/your_experiment_path -v --range 0 1000 5
 
@@ -314,7 +317,7 @@ def inspect_pings_map(
             packet_to_vis.add_mesh(np.array(cur_mesh.vertices, dtype=np.float64), np.array(cur_mesh.triangles), np.array(cur_mesh.vertex_colors, dtype=np.float64))
         
         q_main2vis.put(packet_to_vis)
-
+        print("Wait for 5 seconds ...")
         time.sleep(5)
     
     cam_names = dataset.cam_names 
@@ -340,6 +343,7 @@ def inspect_pings_map(
             gs_eval_output_csv_path=gs_eval_output_csv_path,
             eval_down_rate=config.gs_vis_down_rate,
             tsdf_fusion_max_range=tsdf_fusion_max_range_m,
+            update_neural_points_vis=show_gs,
             vis_on=visualize,
             eval_cam_refine_on=cam_refine_on,
             log_on=log_on,
@@ -365,6 +369,7 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                       recon_3d_tsdf_on: bool = False,
                       eval_on: bool = False,
                       render_on: bool = True,
+                      update_neural_points_vis: bool = True,
                       mesh_to_vis: o3d.geometry.TriangleMesh = None,
                       gs_eval_output_csv_path: str = None,
                       eval_down_rate: int = 0, 
@@ -492,6 +497,12 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
     frame_end = min(frame_count, frame_end)
 
     for frame_id in tqdm(range(frame_begin, frame_end, frame_step), desc="Render views along the trajectory"):
+
+        dataset.read_frame_with_loader(frame_id, init_pose = False, use_image=True, monodepth_on=config.monodepth_on) 
+
+        if dataset.cur_cam_img is None:
+            continue
+
         remove_gpu_cache()
 
         T_w_l_np = view_poses[frame_id] # for the usual case, we use LiDAR pose and a preset camera-LiDAR calibration
@@ -518,11 +529,6 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                     displacement_range_ratio=config.displacement_range_ratio,
                     max_scale_ratio=config.max_scale_ratio,
                     unit_scale_ratio=config.unit_scale_ratio)
-        
-        # may not load images
-        # print("Begin data loading")
-        dataset.read_frame_with_loader(frame_id, init_pose = False, use_image=True, monodepth_on=config.monodepth_on) 
-        # print("Data loading done")
 
         cur_frame_measured_pcd_o3d = None
 
@@ -577,6 +583,10 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                                         img_width = free_cam_W, img_height = free_cam_H)
 
             else:
+                
+                if cur_cam_name not in list(dataset.cur_cam_img.keys()):
+                    continue
+
                 K_mat = dataset.K_mats[cur_cam_name]
                 T_c_l = torch.tensor(dataset.T_c_l_mats[cur_cam_name], dtype=config.dtype, device=config.device) 
                 
@@ -844,7 +854,7 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                 current_frames=frames_to_vis, 
                 img_down_rate=eval_down_rate)
 
-            if render_on:
+            if update_neural_points_vis:
                 packet_to_vis.add_neural_points_data(neural_points, only_local_map=(not vis_global_on))
             
             if cur_frame_measured_pcd_o3d is not None:
