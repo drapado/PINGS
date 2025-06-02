@@ -1,5 +1,5 @@
 setting:
-  name: "test_ipbcar_gs_ours"
+  name: "test_ipbcar_gs"
   output_root: "./pings_experiments"
   deskew: True
   deskew_ref_ratio: 0.33

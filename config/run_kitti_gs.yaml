@@ -34,7 +34,7 @@ loss:
   weight_e: 0.5
 gs:
   gs_type: gaussian_surfel # select from 3d_gs and gaussian_surfel
-  monodepth_on: True # False
+  monodepth_on: True # False # If on, you need to install dependencies for the monodepth model
   exposure_correction_on: True
   cam_pose_train_on: False
   view_concat_on: True

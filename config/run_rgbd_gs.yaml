@@ -1,5 +1,5 @@
 setting:
-  name: "test_tum_gs"
+  name: "test_rgbd_gs"
   output_root: "./pings_experiments"
   color_channel: 3
 process:
