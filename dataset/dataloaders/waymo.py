@@ -8,9 +8,12 @@ import json
 import numpy as np
 import open3d as o3d
 
+# https://waymo.com/open/
+
 class WaymoDataset:
     def __init__(self, data_dir, *_, **__):
         
+        self.contains_image = True
         self.use_only_lidar_top = True 
         self.load_img = False # default
         self.use_only_colorized_points = True
@@ -123,11 +126,9 @@ class WaymoDataset:
             frame_data = {"points": points}
             return frame_data
 
-        # points_ts = self.get_timestamps()
-
         # load img
         
-        # TODO: follow IPB car loader
+        # follow IPB car loader
         img_dict = {}
         depth_img_dict = {}
 
@@ -169,12 +170,6 @@ class WaymoDataset:
 
     def __len__(self):
         return len(self.lidar_top_files)
-    
-    # ouster-128 lidar (point-wise timestamp)
-    @staticmethod
-    def get_timestamps():
-        timestamps = np.expand_dims(np.floor(np.arange(128 * 2048) / 128) / 2048, axis=1)
-        return timestamps
     
     def associate_img_to_lidar(self, lidar_ts, img_ts):
         # for each lidar ts, find the closest img_ts

@@ -34,11 +34,13 @@ from datetime import datetime
 
 from utils.tools import get_time
 
-# Data loader for the in-house car dataset (to-be-released)
+# Data loader for the in-house car dataset collected in Bonn (to-be-released after anynomization)
+# This is the dataset used for the main experiments in the paper
 
 class IPBCarDataset:
     def __init__(self, data_dir, cam_name: str, *_, **__):
         
+        self.contains_image = True
         self.load_img = False # default
 
         self.use_only_colorized_points = False

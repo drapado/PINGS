@@ -31,6 +31,8 @@ import open3d as o3d
 class NeuralRGBDDataset:
     def __init__(self, data_dir: Path, sequence: str, *_, **__):
 
+        self.contains_image: bool = True
+
         self.is_rgbd: bool = True
         
         sequence_dir = os.path.join(data_dir, sequence)

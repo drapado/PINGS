@@ -39,6 +39,7 @@ class ReplicaDataset:
 
         sequence_dir = os.path.join(data_dir, sequence)
 
+        self.contains_image: bool = True
         self.is_rgbd: bool = True
 
         self.img_dir = os.path.join(sequence_dir, "results/")

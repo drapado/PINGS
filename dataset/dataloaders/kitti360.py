@@ -36,6 +36,8 @@ import numpy as np
 
 class KITTI360Dataset:
     def __init__(self, data_dir: Path, sequence: str, *_, **__):
+
+        self.contains_image = True
         self.sequence_id = str(sequence).zfill(2)
 
         seq_str = f"2013_05_28_drive_{str(sequence).zfill(4)}_sync/"
@@ -62,7 +64,6 @@ class KITTI360Dataset:
         self.velodyne_dir = os.path.join(self.lidar_root_dir, "velodyne_points/data/")
         self.scan_files = sorted(glob.glob(self.velodyne_dir + "*.bin"))
 
-        # img_type = "data_rgb" # 512, 1392
         img_type = "data_rect" # 376, 1408
 
         self.T_c_l_mats = {}

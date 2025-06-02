@@ -28,9 +28,13 @@ from pathlib import Path
 import numpy as np
 from pyquaternion import Quaternion
 
+# https://ori-drs.github.io/newer-college-dataset/
 
 class NewerCollegeDataset:
     def __init__(self, data_dir: Path, *_, **__):
+
+        self.contains_image = False
+
         try:
             self.PyntCloud = importlib.import_module("pyntcloud").PyntCloud
         except ModuleNotFoundError:

@@ -47,6 +47,9 @@ class RosbagDataset:
         from utils.point_cloud2 import read_point_cloud
 
         self.read_point_cloud = read_point_cloud
+
+        self.contains_image: bool = False # TODO: add support for loading images from rosbags
+
         if data_dir.is_file():
             self.sequence_id = os.path.basename(data_dir).split(".")[0]
             self.bag = AnyReader([data_dir])

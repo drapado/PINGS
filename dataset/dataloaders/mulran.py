@@ -26,9 +26,13 @@ from pathlib import Path
 
 import numpy as np
 
+# https://sites.google.com/view/mulran-pr/dataset
 
 class MulranDataset:
     def __init__(self, data_dir: Path, *_, **__):
+
+        self.contains_image = False
+        
         self.sequence_id = os.path.basename(data_dir)
         self.sequence_dir = os.path.realpath(data_dir)
         self.velodyne_dir = os.path.join(self.sequence_dir, "Ouster/")

@@ -50,6 +50,7 @@ class OxfordRawDataset:
         # this also applies to the [DigiForest](https://www.ipb.uni-bonn.de/data/digiforest-dataset/) dataset, 
         # which uses the simialr sensor setup
         
+        self.contains_image = True
         self.load_img = False # default
 
         self.use_only_colorized_points = False

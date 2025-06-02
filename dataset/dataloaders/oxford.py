@@ -48,6 +48,8 @@ class OxfordDataset:
         # NOTE: This dataloader use the preprocessed data.
         # For using the raw data, please use the OxfordRawDataset data loader 
 
+        self.contains_image: bool = True
+
         self.load_img = False # default
 
         self.use_only_colorized_points = False

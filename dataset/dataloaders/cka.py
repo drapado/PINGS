@@ -31,11 +31,13 @@ import open3d as o3d
 
 # CKA RGBD dataset in the greenhouse
 # or general RGBD data collected by realsense
+# For example, the BUP20 dataset and the fruit shape completion dataset (https://www.ipb.uni-bonn.de/data/shape_completion/index.html)
 
 class CKADataset:
     def __init__(self, data_dir: Path, sequence: str, *_, **__):
 
         self.is_rgbd: bool = True
+        self.contains_image: bool = True
 
         self.rgb_dir = os.path.join(data_dir, "color/")
         self.depth_dir = os.path.join(data_dir, "depth/")

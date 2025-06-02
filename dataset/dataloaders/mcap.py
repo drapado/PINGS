@@ -31,6 +31,8 @@ class McapDataloader:
         """Standalone .mcap dataloader withouth any ROS distribution."""
         # Conditional imports to avoid injecting dependencies for non mcap users
 
+        self.contains_image = False # TODO: add support for loading images in ros2 bags
+
         try:
             self.make_reader = importlib.import_module("mcap.reader").make_reader
             self.read_ros2_messages = importlib.import_module("mcap_ros2.reader").read_ros2_messages

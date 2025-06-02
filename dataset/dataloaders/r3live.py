@@ -33,7 +33,7 @@ import yaml
 
 from datetime import datetime
 
-# R3Live dataset in kitti-like format
+# R3Live Livox dataset in kitti-like format
 # https://github.com/ziv-lin/r3live_dataset
 
 # camera parameters
@@ -56,6 +56,7 @@ from datetime import datetime
 class R3LiveDataset:
     def __init__(self, data_dir, *_, **__):
         
+        self.contains_image = True
         self.load_img = False # default
         self.use_only_colorized_points = False
 

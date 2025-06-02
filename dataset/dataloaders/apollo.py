@@ -34,6 +34,9 @@ from pyquaternion import Quaternion
 
 class ApolloDataset:
     def __init__(self, data_dir: Path, *_, **__):
+
+        self.contains_image = False
+
         self.scan_files = natsort.natsorted(glob.glob(f"{data_dir}/pcds/*.pcd"))
         self.gt_poses = self.read_poses(f"{data_dir}/poses/gt_poses.txt")
         self.sequence_id = os.path.basename(data_dir)

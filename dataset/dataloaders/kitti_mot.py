@@ -36,6 +36,8 @@ import open3d as o3d
 class KITTIMOTDataset:
     def __init__(self, data_dir, sequence: str, *_, **__):
         
+        self.contains_image = True
+        
         self.sequence_id = str(sequence).zfill(4)
         # include the data dir as kitti_mot/training/
         # self.kitti_sequence_dir = os.path.join(data_dir, "sequences", self.sequence_id)
@@ -250,7 +252,7 @@ class KITTIMOTDataset:
         # points as np.numpy (N,4)
         points[:,3] = 1 # homo coordinate
 
-        points = self.intrinsic_correct(points) # FIXME: only for kitti
+        points = self.intrinsic_correct(points) # only for kitti
 
         # transfrom velodyne points to camera coordinate
         points_cam = np.matmul(T_c_l, points.T).T # N, 4

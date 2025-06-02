@@ -117,7 +117,11 @@ class SLAMDataset():
             self.is_rgbd = self.loader.is_rgbd
         if hasattr(self.loader, "deskew_off"):
             self.config.deskew = False
-            
+        if hasattr(self.loader, "contains_image"):
+            if not self.loader.contains_image and self.config.gs_on:
+                print("Warning: the dataset does not contain images, degenerate to lidar-only SLAM (PIN-SLAM)")
+                self.config.gs_on = False
+
         if config.color_channel == 3:
             self.loader.load_img = True
             if self.monodepth_on:

@@ -33,11 +33,12 @@ from datetime import datetime
 
 # VBR dataset in kitti-like format
 # Download from: https://rvp-group.net/slam-dataset.html
-# Devkit: https://github.com/rvp-group/vbr-devkit
+# Devkit to convert to kitti format: https://github.com/rvp-group/vbr-devkit
 
 class VBRDataset:
     def __init__(self, data_dir, *_, **__):
         
+        self.contains_image = True
         self.use_only_colorized_points = True
 
         self.ouster_dir = os.path.join(data_dir, "ouster_points", "data/")

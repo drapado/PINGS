@@ -29,9 +29,8 @@ from typing import List
 import cv2
 import numpy as np
 
-
+# Reference:
 # https://github.com/fudan-zvg/S-NeRF/blob/main/scripts/nuscenes_preprocess.py
-# TODO: add imgs
 # search and check nuscenes img loaders
 # what is the v1.01-mini split
 
@@ -43,6 +42,8 @@ class NuScenesDataset:
             print("nuscenes-devkit is not installed on your system")
             print('run "pip install nuscenes-devkit"')
             sys.exit(1)
+        
+        self.contains_image: bool = True
 
         # NOTE: If someone needs more splits from nuScenes expose this 2 parameters
         #  nusc_version: str = "v1.0-trainval"
@@ -80,6 +81,8 @@ class NuScenesDataset:
 
         # Get assignment of scenes to splits.
         split_logs = create_splits_logs(split, self.nusc)
+
+        # TODO: synchronization issues
 
         # print(split_logs)
 

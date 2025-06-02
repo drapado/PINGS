@@ -33,6 +33,7 @@ from dataset.dataloaders import supported_file_extensions
 class GenericDataset:
     def __init__(self, data_dir: Path, *_, **__):
         # Config stuff
+        self.contains_image = False
         self.sequence_id = os.path.basename(os.path.abspath(data_dir))
         self.scans_dir = os.path.join(os.path.realpath(data_dir), "")
         self.scan_files = np.array(

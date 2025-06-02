@@ -34,6 +34,7 @@ import open3d as o3d
 class AzureDataset:
     def __init__(self, data_dir: Path, sequence: str, *_, **__):
         
+        self.contains_image: bool = True
         self.is_rgbd: bool = True
         
         self.rgb_dir = os.path.join(data_dir, "color/")

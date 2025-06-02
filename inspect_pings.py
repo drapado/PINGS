@@ -81,7 +81,7 @@ def inspect_pings_map(
     pose_path: Optional[str] = typer.Option(None, "--pose-path", "-p", help='Path to a certain pose txt file specified in KITTI format, the poses are used for rendering'),
     frame_range: Optional[Tuple[int, int, int]] = typer.Option(None, "--range", help='Specify the start, end and step of the frame for video rendering or evaluation, for example: --range 10 1000 1. If not specified, the whole sequence will be used. When doing evaluation, the frame range is according to the used dataset instead of the pose file'),
     center_frame_id: int = typer.Option(0, "--center-frame-id", "-f", help='set the PINGS local map to be centered at this frame id'),
-    visualize: bool = typer.Option(True, '--visualize/--no-visualize', help='Turn on the GS visualizer (default: on)'),
+    visualize: bool = typer.Option(True, '--visualize/--no-visualize', help='Turn on the PINGS visualizer GUI (default: on)'),
     log_on: bool = typer.Option(False, "--log-on", "-l", help='Turn on the logs printing'),
     eval_seq: bool = typer.Option(False, "--eval-seq", "-e", help='Do the evaluation on the input sequence'),
     use_free_view_camera: bool = typer.Option(False, "--use-free-view-camera", "-c", help='Render video with the recorded free view camera, input via -p'),

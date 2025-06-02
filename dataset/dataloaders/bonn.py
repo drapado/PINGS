@@ -35,6 +35,8 @@ class BonnRGBDDataset:
  
         sequence_dir = os.path.join(data_dir, sequence)
 
+        self.contains_image: bool = True
+
         self.is_rgbd: bool = True
 
         self.rgb_frames, self.depth_frames, self.gt_poses = self.loadtum(sequence_dir)

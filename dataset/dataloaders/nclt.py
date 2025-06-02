@@ -27,11 +27,15 @@ from pathlib import Path
 
 import numpy as np
 
+# https://robots.engin.umich.edu/nclt/
 
 class NCLTDataset:
     """Adapted from PyLidar-SLAM"""
 
     def __init__(self, data_dir: Path, *_, **__):
+
+        self.contains_image = False # actually, the dataset contains images TODO: support PINGS
+
         self.sequence_id = os.path.basename(data_dir)
         self.sequence_dir = os.path.join(os.path.realpath(data_dir), "")
         self.scans_dir = os.path.join(self.sequence_dir, "velodyne_sync")

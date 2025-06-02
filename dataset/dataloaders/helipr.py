@@ -38,6 +38,8 @@ from dataset.dataloaders import supported_file_extensions
 
 class HeLiPRDataset:
     def __init__(self, data_dir: Path, lidar_name: str, *_, **__):
+
+        self.contains_image = False
      
         self.lidar_name = lidar_name
         self.sequence_dir = os.path.join(data_dir, "LiDAR", self.lidar_name)

@@ -89,6 +89,8 @@ class OusterDataloader:
             print(f'ouster-sdk is not installed on your system, run "pip install ouster-sdk"')
             exit(1)
 
+        self.contains_image: bool = False
+
         # since we import ouster-sdk's client module locally, we keep it locally as well
         self._client = client
 

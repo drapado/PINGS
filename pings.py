@@ -62,7 +62,7 @@ docstring = f"""
 
 [bold green]Examples: [/bold green]
 
-# Use a more specific dataloader: select from {", ".join(_available_dl_help)}
+# Use a specific dataloader: select from {", ".join(_available_dl_help)}
 
 # Run on IPB Car data sequence
 $ python3 pings.py ./config/run_ipbcar_gs.yaml ipb_car -i ./data/ipb_car/ipbcar_test_subset/ -vs
@@ -78,19 +78,19 @@ $ python3 pings.py ./config/run_kitti_gs.yaml kitti 00 -i ./data/kitti_example/ 
 @app.command(help=docstring)
 def run_pings(
     config_path: str = typer.Argument('config/run_pin_slam.yaml', help='Path to *.yaml config file'),
-    dataset_name: Optional[str] = typer.Argument(None, help='Name of a specific dataset, example: kitti, oxford, ipbcar or rosbag'),
+    dataset_name: Optional[str] = typer.Argument(None, help='Name of a specific dataset, example: kitti, oxford, ipbcar, rosbag, etc.'),
     sequence_name: Optional[str] = typer.Argument(None, help='Name of a specific data sequence or the rostopic for point cloud'),
     seed: int = typer.Option(42, help='Set the random seed'),
-    input_path: Optional[str] = typer.Option(None, '--input-path', '-i', help='Path to the point cloud input directory (overrides pc_path in config file)'),
+    input_path: Optional[str] = typer.Option(None, '--input-path', '-i', help='Path to the input dataset directory (overrides pc_path in config file)'),
     output_path: Optional[str] = typer.Option(None, '--output-path', '-o', help='Path to the result output directory (overrides output_root in config file)'),
     frame_range: Optional[Tuple[int, int, int]] = typer.Option(None, '--range', help='Specify the start, end and step of the processed frame, e.g. "10 1000 1"'),
-    visualize: bool = typer.Option(False, '--visualize', '-v', help='Turn on the GS visualizer, could make the SLAM processing slower (default: off)'),
+    visualize: bool = typer.Option(False, '--visualize', '-v', help='Turn on the PINGS visualizer GUI, could make the SLAM processing slower (default: off)'),
     log_on: bool = typer.Option(False, '--log-on', '-l', help='Turn on the logs printing (default: off)'),
     wandb_on: bool = typer.Option(False, '--wandb-on', '-w', help='Turn on the weight & bias logging (default: off)'),
-    save_map: bool = typer.Option(False, '--save-map', '-s', help='Save the PIN map after SLAM (default: off)'),
+    save_map: bool = typer.Option(False, '--save-map', '-s', help='Save the PINGS map after SLAM (default: off)'),
     save_mesh: bool = typer.Option(False, '--save-mesh', '-m', help='Save the reconstructed mesh after SLAM (default: off)'),
     save_merged_pc: bool = typer.Option(False, '--save-merged-pc', '-p', help='Save the merged point cloud after SLAM (default: off)'),
-    gs_on: bool = typer.Option(True, '--gs-on/--gs-off', '-g', help='Turn on GS (default: on)'),
+    gs_on: bool = typer.Option(True, '--gs-on/--gs-off', '-g', help='Turn on the Gaussian Splatting radiance field branch of PINGS (default: on)'),
     tracker_on: bool = typer.Option(True, '--tracker-on/--tracker-off', help='Turn on pose tracker (default: on), otherwise it would be pure mapping mode. If one has already set in the config file the tracker to be off, we would anyway let it be off'),
     deskew: bool = typer.Option(True, '--deskew/--no-deskew', help='Try to deskew the LiDAR scans if it is not set in the config file (default: on)'),
     tag: Optional[str] = typer.Option(None, '--tag', help='A tag for this experiment')

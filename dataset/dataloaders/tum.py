@@ -28,11 +28,14 @@ from pathlib import Path
 import numpy as np
 import open3d as o3d
 
+# https://cvg.cit.tum.de/data/datasets/rgbd-dataset
+
 class TUMDataset:
     def __init__(self, data_dir: Path, sequence: str, *_, **__):
  
         sequence_dir = os.path.join(data_dir, sequence)
-
+        
+        self.contains_image: bool = True
         self.is_rgbd: bool = True
 
         self.rgb_frames, self.depth_frames, self.gt_poses = self.loadtum(sequence_dir)
