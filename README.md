@@ -8,6 +8,8 @@
     <a href="https://www.ipb.uni-bonn.de/wp-content/papercite-data/pdf/pan2025rss.pdf"><img src="https://img.shields.io/badge/Paper-pdf-<COLOR>.svg?style=flat-square" /></a>
     <a href="https://github.com/PRBonn/PINGS/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" /></a>
   </p>
+  <h3 align="center"><a href="https://www.ipb.uni-bonn.de/wp-content/papercite-data/pdf/pan2025rss.pdf">Paper</a> | <a href="https://www.youtube.com/watch?v=XuOLoZdcReA&t=2s">Video</a> | <a href="https://www.youtube.com/watch?v=bbAw_ZC_1fI">Demo</a> </h3>
+  <div align="center"></div>
 </p>
 
 **TL;DR: PINGS is a LiDAR-visual SLAM system unifying distance fields and radiance fields within a neural point map**
