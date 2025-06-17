@@ -77,8 +77,8 @@ $ python3 pings.py ./config/run_kitti_gs.yaml kitti 00 -i ./data/kitti_example/ 
 
 @app.command(help=docstring)
 def run_pings(
-    config_path: str = typer.Argument('config/run_pin_slam.yaml', help='Path to *.yaml config file'),
-    dataset_name: Optional[str] = typer.Argument(None, help='Name of a specific dataset, example: kitti, oxford, ipbcar, rosbag, etc.'),
+    config_path: str = typer.Argument(help='Path to *.yaml config file'),
+    dataset_name: Optional[str] = typer.Argument(help='Name of a specific dataset, example: kitti, oxford, ipbcar, rosbag, etc.'),
     sequence_name: Optional[str] = typer.Argument(None, help='Name of a specific data sequence or the rostopic for point cloud'),
     seed: int = typer.Option(42, help='Set the random seed'),
     input_path: Optional[str] = typer.Option(None, '--input-path', '-i', help='Path to the input dataset directory (overrides pc_path in config file)'),

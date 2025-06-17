@@ -89,7 +89,11 @@ pip3 install -r requirements.txt
 
 ## Docker
 <details>
-  <summary>[TODO]</summary>
+  <summary>[Details (click to expand)]</summary>
+
+Firstly edit your data directory at: `- /your_data_storage_directory_here:/packages/pings/data/` in `docker-compose.yml`.
+Then build the image by `make build` and run the container by `make run`. 
+Afterwards you can use pings as you wish in the terminal. 
 
 </details>
 

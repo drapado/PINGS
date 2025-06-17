@@ -77,7 +77,6 @@ optimizer:
   learning_rate_color: 2e-3
   learning_rate_exposure: 1e-3
 eval:
-  gs_eval_on: True
   sensor_cad_path: ./cad/ipb_car.ply
   mesh_freq_frame: 10 # reconstruct the mesh every x frames
   mesh_min_nn: 19
