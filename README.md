@@ -91,6 +91,7 @@ pip3 install -r requirements.txt
 <details>
   <summary>[Details (click to expand)]</summary>
 
+For the prerequisite, you need to install docker and nvidia container runtime.
 Firstly edit your data directory at: `- /your_data_storage_directory_here:/packages/pings/data/` in `docker-compose.yml`.
 Then build the image by `make build` and run the container by `make run`. 
 Afterwards you can use pings as you wish in the terminal. 
