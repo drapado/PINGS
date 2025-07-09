@@ -1227,10 +1227,11 @@ class Mapper:
                 pixel_v_min = 0
                 pixel_v_max = -1
                 if self.dataset.cam_valid_v_ratios_minmax is not None:
-                    img_width = rendered_rgb_image.shape[1]
+                    img_height = rendered_rgb_image.shape[1]
                     valid_v_ratio = self.dataset.cam_valid_v_ratios_minmax[cam_name]
-                    pixel_v_min = int(valid_v_ratio[0]*img_width)
-                    pixel_v_max = int(valid_v_ratio[1]*img_width)
+                    pixel_v_min = int((1-valid_v_ratio[1])*img_height)
+                    pixel_v_max = int((1-valid_v_ratio[0])*img_height)
+                    # img row from top (min) to bottom (max)
                     # print("pixel_v_min: ", pixel_v_min, "pixel_v_max: ", pixel_v_max)
 
                 rendered_rgb_image_for_loss = rendered_rgb_image[:,pixel_v_min:pixel_v_max,:]
@@ -1871,11 +1872,11 @@ class Mapper:
 
                     pixel_v_min = 0
                     pixel_v_max = -1
-                    img_width = gt_rgb_image.shape[1]
+                    img_height = gt_rgb_image.shape[1]
                     if self.dataset.cam_valid_v_ratios_minmax is not None:
                         valid_v_ratio = self.dataset.cam_valid_v_ratios_minmax[cam_name]
-                        pixel_v_min = int(valid_v_ratio[0]*img_width)
-                        pixel_v_max = int(valid_v_ratio[1]*img_width)
+                        pixel_v_min = int((1-valid_v_ratio[1])*img_height)
+                        pixel_v_max = int((1-valid_v_ratio[0])*img_height)
 
                     gt_rgb_image_for_eval = gt_rgb_image[:,pixel_v_min:pixel_v_max,:]
 

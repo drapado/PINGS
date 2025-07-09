@@ -774,10 +774,10 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                     pixel_v_min = 0
                     pixel_v_max = -1
                     if dataset.cam_valid_v_ratios_minmax is not None:
-                        img_width = rendered_rgb_image.shape[1]
+                        img_height = rendered_rgb_image.shape[1]
                         valid_v_ratio = dataset.cam_valid_v_ratios_minmax[cur_cam_name]
-                        pixel_v_min = int(valid_v_ratio[0]*img_width)
-                        pixel_v_max = int(valid_v_ratio[1]*img_width)
+                        pixel_v_min = int((1-valid_v_ratio[1])*img_height)
+                        pixel_v_max = int((1-valid_v_ratio[0])*img_height)
 
                     rendered_rgb_image_for_eval = rendered_rgb_image[:,pixel_v_min:pixel_v_max,:]
                     gt_rgb_image_for_eval = gt_rgb_image[:,pixel_v_min:pixel_v_max,:]
