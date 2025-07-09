@@ -76,6 +76,8 @@ class SLAMDataset():
 
         self.is_rgbd: bool = False # by default, lidar dataset
 
+        self.cam_valid_v_ratios_minmax = None # mask for valid vertical FOV
+
         self.loader = dataset_factory(
             dataloader=config.data_loader_name, # a specific dataset or data format
             data_dir=Path(config.pc_path),
@@ -121,6 +123,8 @@ class SLAMDataset():
             if not self.loader.contains_image and self.config.gs_on:
                 print("Warning: the dataset does not contain images, degenerate to lidar-only SLAM (PIN-SLAM)")
                 self.config.gs_on = False
+        if hasattr(self.loader, "cam_valid_v_ratios_minmax"):
+            self.cam_valid_v_ratios_minmax = self.loader.cam_valid_v_ratios_minmax
 
         if config.color_channel == 3:
             self.loader.load_img = True

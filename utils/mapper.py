@@ -1224,16 +1224,17 @@ class Mapper:
                 # RGB rendering loss (combining L1 and SSIM)
 
                 # specifically for ipb car dataset (remove the ego car in the rear and front camera for loss calculation)
-                # only for ipb car dataset (FIXME), use mask in the future, now it's just a ugly quick fix
-                if cam_name == "rear": 
-                    pixel_h_used = int(910/1024*gt_rgb_image.shape[1])
-                elif cam_name == "front":
-                    pixel_h_used = int(990/1024*gt_rgb_image.shape[1])
-                else:  
-                    pixel_h_used = -1
+                pixel_v_min = 0
+                pixel_v_max = -1
+                if self.dataset.cam_valid_v_ratios_minmax is not None:
+                    img_width = rendered_rgb_image.shape[1]
+                    valid_v_ratio = self.dataset.cam_valid_v_ratios_minmax[cam_name]
+                    pixel_v_min = int(valid_v_ratio[0]*img_width)
+                    pixel_v_max = int(valid_v_ratio[1]*img_width)
+                    # print("pixel_v_min: ", pixel_v_min, "pixel_v_max: ", pixel_v_max)
 
-                rendered_rgb_image_for_loss = rendered_rgb_image[:,:pixel_h_used,:]
-                gt_rgb_image_for_loss = gt_rgb_image[:,:pixel_h_used,:]
+                rendered_rgb_image_for_loss = rendered_rgb_image[:,pixel_v_min:pixel_v_max,:]
+                gt_rgb_image_for_loss = gt_rgb_image[:,pixel_v_min:pixel_v_max,:]
 
                 loss_rgb_l1 = l1_loss(rendered_rgb_image_for_loss, gt_rgb_image_for_loss)
                 
@@ -1868,14 +1869,15 @@ class Mapper:
                     #     mask_broadcasted = cur_sky_mask.repeat(3,1,1)
                     #     gt_rgb_image[mask_broadcasted] = bg_3d.expand_as(gt_rgb_image)[mask_broadcasted]
 
-                    if cam_name == "rear": # only for ipb car dataset (FIXME), use mask in the future, now it's just a ugly quick fix
-                        pixel_h_used = int(910/1024*gt_rgb_image.shape[1])
-                    elif cam_name == "front":
-                        pixel_h_used = int(990/1024*gt_rgb_image.shape[1])
-                    else:  
-                        pixel_h_used = -1
+                    pixel_v_min = 0
+                    pixel_v_max = -1
+                    img_width = gt_rgb_image.shape[1]
+                    if self.dataset.cam_valid_v_ratios_minmax is not None:
+                        valid_v_ratio = self.dataset.cam_valid_v_ratios_minmax[cam_name]
+                        pixel_v_min = int(valid_v_ratio[0]*img_width)
+                        pixel_v_max = int(valid_v_ratio[1]*img_width)
 
-                    gt_rgb_image_for_eval = gt_rgb_image[:,:pixel_h_used,:]
+                    gt_rgb_image_for_eval = gt_rgb_image[:,pixel_v_min:pixel_v_max,:]
 
                     gt_depth_image = None
                     if cur_view_cam.depth_on: 
@@ -1908,7 +1910,7 @@ class Mapper:
 
                         rendered_rgb_image = torch.clamp(rendered_rgb_image, 0, 1)
 
-                        rendered_rgb_image_for_eval = rendered_rgb_image[:,:pixel_h_used,:]
+                        rendered_rgb_image_for_eval = rendered_rgb_image[:,pixel_v_min:pixel_v_max,:]
 
                         if not self.config.gs_eval_cam_refine_on: # do not optimize cam parameters, directly break
                             break

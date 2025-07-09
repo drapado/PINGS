@@ -770,16 +770,17 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                     cur_frame_rendered_pcd_o3d += cur_cam_pcd_o3d 
 
                 if eval_on:
-                    # only for ipb car dataset to mask out the ego car (FIXME), use mask in the future, now it's just a ugly quick fix
-                    if cur_cam_name == "rear": 
-                        pixel_h_used = int(910/1024*gt_rgb_image.shape[1])
-                    elif cur_cam_name == "front":
-                        pixel_h_used = int(990/1024*gt_rgb_image.shape[1])
-                    else:  
-                        pixel_h_used = -1
+                    # only for ipb car dataset to mask out the ego car
+                    pixel_v_min = 0
+                    pixel_v_max = -1
+                    if dataset.cam_valid_v_ratios_minmax is not None:
+                        img_width = rendered_rgb_image.shape[1]
+                        valid_v_ratio = dataset.cam_valid_v_ratios_minmax[cur_cam_name]
+                        pixel_v_min = int(valid_v_ratio[0]*img_width)
+                        pixel_v_max = int(valid_v_ratio[1]*img_width)
 
-                    rendered_rgb_image_for_eval = rendered_rgb_image[:,:pixel_h_used,:]
-                    gt_rgb_image_for_eval = gt_rgb_image[:,:pixel_h_used,:]
+                    rendered_rgb_image_for_eval = rendered_rgb_image[:,pixel_v_min:pixel_v_max,:]
+                    gt_rgb_image_for_eval = gt_rgb_image[:,pixel_v_min:pixel_v_max,:]
 
                     cur_psnr = psnr(rendered_rgb_image_for_eval, gt_rgb_image_for_eval).mean().item()
                     cur_ssim = fused_ssim(rendered_rgb_image_for_eval.unsqueeze(0), gt_rgb_image_for_eval.unsqueeze(0), train=False).item()

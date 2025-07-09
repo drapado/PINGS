@@ -88,6 +88,13 @@ class IPBCarDataset:
         self.cam_widths = {}
         self.cam_heights = {}
 
+        self.cam_valid_v_ratios_minmax = {
+            "front": [0.04, 1.0],
+            "left": [0.0, 1.0],
+            "right": [0.0, 1.0],
+            "rear": [0.12, 1.0]
+        }
+
         # horizontal lidar
         self.lidar_horizontal_dir = os.path.join(data_dir, "lidar_{}_points".format(self.lidar_h_topic_name), "data/")
         self.lidar_horizontal_files = sorted(glob.glob(self.lidar_horizontal_dir + "*.ply")) # we use bin here, can not be directly visualized but would be much smaller
