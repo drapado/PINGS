@@ -208,3 +208,5 @@ q.log/
 
 job_scripts/
 job_scripts
+
+agri-slam-data/*
