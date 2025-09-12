@@ -39,7 +39,7 @@ def supported_file_extensions():
 
 def sequence_dataloaders():
     # TODO: automatically infer this
-    return ["kitti", "kitti_raw", "kitti360", "kitti_mot", "nuscenes", "helipr", "replica", "tum", "neuralrgbd", "ipb_car"]
+    return ["kitti", "kitti_raw", "kitti360", "kitti_mot", "nuscenes", "helipr", "replica", "tum", "neuralrgbd", "ipb_car", "agri_slam"]
 
 
 def available_dataloaders() -> List:
