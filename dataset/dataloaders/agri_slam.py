@@ -38,7 +38,7 @@ class AgriSLAMDataset:
         self.contains_image = True
         
         # Hardcoded paths for agri-slam-data/train
-        self.agri_slam_dir = "/packages/pings/agri-slam-data/train"
+        self.agri_slam_dir = "/packages/pings/agri-slam-data/train_val"
         
         # Ouster LiDAR point cloud files
         self.ouster_dir = os.path.join(self.agri_slam_dir, "ouster/points/")

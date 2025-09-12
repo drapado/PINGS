@@ -621,11 +621,14 @@ def write_to_json(filename: Path, content: dict):
         json.dump(content, file)
 
 
-def feature_pca_torch(data, principal_components = None,
-                     principal_dim: int = 3,
-                     down_rate: int = 1,
-                     project_data: bool = True,
-                     normalize: bool = True):
+def feature_pca_torch(
+    data,
+    principal_components=None,
+    principal_dim: int = 3,
+    down_rate: int = 1,
+    project_data: bool = True,
+    normalize: bool = True,
+):
     """
         do PCA to a NxD torch tensor to get the data along the K principle dimensions
         N is the data count, D is the dimension of the data
@@ -633,49 +636,86 @@ def feature_pca_torch(data, principal_components = None,
         We can also use a pre-computed principal_components for only the projection of input data
     """
 
+    # Ensure 2D tensor
+    if data.dim() != 2:
+        data = data.view(data.shape[0], -1)
+
     N, D = data.shape
 
-    # Step 1: Center the data (subtract the mean of each dimension)
-    data_centered = data - data.mean(dim=0)
+    # Filter out rows with NaN/Inf to avoid invalid covariance
+    finite_mask = torch.isfinite(data).all(dim=1)
+    data_valid = data[finite_mask]
+
+    # If not enough valid samples, return safe defaults
+    if data_valid.shape[0] <= max(principal_dim, 1):
+        # Identity principal components in feature space (pad/truncate)
+        eye = torch.eye(D, device=data.device, dtype=data.dtype)
+        principal_components = eye[:, :principal_dim]
+        # Optional projection
+        data_pca = None
+        if project_data:
+            data_centered = torch.zeros_like(data[:, :principal_dim])
+            data_pca = data_centered
+        return data_pca, principal_components
+
+    # Step 1: Center the valid data (subtract the mean of each dimension)
+    mean_valid = data_valid.mean(dim=0, keepdim=True)
+    data_centered_valid = data_valid - mean_valid
 
     if principal_components is None:
-        data_centered_for_compute = data_centered[::down_rate]
+        # Downsample for eig computation if requested
+        data_centered_for_compute = data_centered_valid[:: max(down_rate, 1)]
 
-        assert data_centered_for_compute.shape[0] > principal_dim, "not enough data for PCA computation, down_rate might be too large or original data count is too small"
+        if data_centered_for_compute.shape[0] <= max(principal_dim, 1):
+            eye = torch.eye(D, device=data.device, dtype=data.dtype)
+            principal_components = eye[:, :principal_dim]
+        else:
+            # Step 2: Compute the covariance matrix (D x D) on valid subset
+            M = data_centered_for_compute.shape[0]
+            cov_matrix = (
+                torch.matmul(data_centered_for_compute.T, data_centered_for_compute)
+                / max(M - 1, 1)
+            )
 
-        # Step 2: Compute the covariance matrix (D x D)
-        cov_matrix = torch.matmul(data_centered_for_compute.T, data_centered_for_compute) / (N - 1)
+            # Step 3: Eigen decomposition for symmetric covariance (stable and real)
+            try:
+                # eigh returns eigenvalues in ascending order
+                eigenvalues, eigenvectors = torch.linalg.eigh(cov_matrix)
+            except RuntimeError:
+                # Fallback to eig if eigh fails unexpectedly
+                eigenvalues_c, eigenvectors_c = torch.linalg.eig(cov_matrix)
+                eigenvalues = eigenvalues_c.real.to(data)
+                eigenvectors = eigenvectors_c.real.to(data)
 
-        # Step 3: Perform eigen decomposition of the covariance matrix
-        eigenvalues, eigenvectors = torch.linalg.eig(cov_matrix)
-        eigenvalues_r = eigenvalues.real.to(data)
-        eigenvectors_r = eigenvectors.real.to(data)
-        # print(eigenvalues)
-        # print(eigenvectors)
-        # eigenvalues = eigenvalues[:, 0]  # Only the real parts are needed
-
-        # Step 4: Sort eigenvalues and eigenvectors in descending order
-        sorted_indices = torch.argsort(eigenvalues_r, descending=True)
-        principal_components = eigenvectors_r[:, sorted_indices[:principal_dim]]  # First 3 principal components
+            # Step 4: Sort eigenvalues and eigenvectors in descending order
+            sorted_indices = torch.argsort(eigenvalues, descending=True)
+            principal_components = eigenvectors[:, sorted_indices[:principal_dim]]
 
     data_pca = None
     if project_data:
-        # Step 5: Project data onto the top 3 principal components
-        data_pca = torch.matmul(data_centered, principal_components) # N, D @ D, P
+        # Project the original data (center using valid-data mean for consistency)
+        data_centered_full = data - mean_valid  # broadcast mean to all rows
+        data_pca = torch.matmul(data_centered_full, principal_components)  # N,P
 
         # normalize to show as rgb
-        if normalize: 
-            # min_vals = data_pca.min(dim=0, keepdim=True).values
-            # max_vals = data_pca.max(dim=0, keepdim=True).values
+        if normalize:
+            try:
+                # Deal with outliers via quantiles; guard empty masks
+                q_down_rate = 19
+                sample = data_pca[::q_down_rate]
+                if sample.shape[0] >= 2:
+                    min_vals = torch.quantile(sample, 0.02, dim=0, keepdim=True)
+                    max_vals = torch.quantile(sample, 0.98, dim=0, keepdim=True)
+                else:
+                    min_vals = data_pca.min(dim=0, keepdim=True).values
+                    max_vals = data_pca.max(dim=0, keepdim=True).values
+            except Exception:
+                min_vals = data_pca.min(dim=0, keepdim=True).values
+                max_vals = data_pca.max(dim=0, keepdim=True).values
 
-            # # deal with outliers
-            down_rate = 19
-            min_vals = torch.quantile(data_pca[::down_rate], 0.02, dim=0, keepdim=True)
-            max_vals = torch.quantile(data_pca[::down_rate], 0.98, dim=0, keepdim=True)
-
-            # Normalize to range [0, 1]
-            data_pca = (data_pca - min_vals) / (max_vals - min_vals)
-
+            # Normalize to range [0, 1] with epsilon to avoid divide-by-zero
+            denom = (max_vals - min_vals).clamp(min=1e-12)
+            data_pca = (data_pca - min_vals) / denom
             data_pca = data_pca.clamp(0, 1)
 
     return data_pca, principal_components
@@ -809,7 +849,9 @@ def rotmat_to_degree_np(Rmat):
     # assert np.isclose(np.linalg.det(Rmat), 1.0)       # Determinant should be 1
     
     # Compute the rotation angle in radians using the trace of the matrix
-    angle_rad = np.arccos((np.trace(Rmat) - 1) / 2.0)
+    cos_val = (np.trace(Rmat) - 1) / 2.0
+    cos_val = np.clip(cos_val, -1.0, 1.0)
+    angle_rad = np.arccos(cos_val)
     
     # Convert to degrees
     angle_deg = np.degrees(angle_rad)
@@ -969,9 +1011,9 @@ def voxel_down_sample_min_value_torch(
 
 # split a large point cloud into bounding box chunks
 def split_chunks(
-    pc: o3d.geometry.PointCloud(),
-    aabb: o3d.geometry.AxisAlignedBoundingBox() = None,
-    chunk_m: float = 100.0
+    pc: o3d.geometry.PointCloud,
+    aabb: o3d.geometry.AxisAlignedBoundingBox = None,
+    chunk_m: float = 100.0,
 ):
 
     if not pc.has_points():

@@ -19,14 +19,14 @@ sampler:
   free_front_sample_n: 2
   free_behind_sample_n: 1
 neuralpoints:
-  voxel_size_m: 0.3
+  voxel_size_m: 0.4
   search_alpha: 0.8
   query_nn_k: 6
   feature_dim: 32
   color_feature_dim: 16
   weighted_first: False
 decoder:
-  freeze_after_frame: 50
+  freeze_after_frame: 130
   gs_mlp_hidden_dim: 128
 loss:
   sigma_sigmoid_m: 0.05
