@@ -38,7 +38,7 @@ class AgriSLAMDataset:
         self.contains_image = True
         
         # Hardcoded paths for agri-slam-data/train
-        self.agri_slam_dir = "/packages/pings/agri-slam-data/train_val"
+        self.agri_slam_dir = "/packages/pings/agri-slam-data/val"
         
         # Ouster LiDAR point cloud files
         self.ouster_dir = os.path.join(self.agri_slam_dir, "ouster/points/")
@@ -174,10 +174,13 @@ class AgriSLAMDataset:
             
         # Load point cloud
         points = self.scans(idx)
-        point_ts = self.get_timestamps(points)
+        point_ts = self.get_timestamps(points, self.scan_files[idx])
+        
+        # Add point_lidar_idx like IPBCar (all zeros for single lidar)
+        point_lidar_idx = np.zeros_like(point_ts)
         
         frame_data = {}
-        frame_data["points_ts"] = point_ts
+        frame_data["point_ts"] = point_ts
         
         if self.load_img and self.image_available:
             # Find closest image timestamp to LiDAR timestamp
@@ -187,8 +190,8 @@ class AgriSLAMDataset:
             if closest_img_idx is not None:
                 img = self.read_img(self.img_files[closest_img_idx])
                 
-                # Create RGB colors for points (start with white)
-                points_rgb = np.ones_like(points)
+                # Create RGB colors for points (start with -1 like IPBCar)
+                points_rgb = -1.0 * np.ones_like(points)  # N,4, last channel for the mask
                 
                 # Project points to camera to get colors
                 points_rgb, depth_map = self.project_points_to_cam(
@@ -205,25 +208,23 @@ class AgriSLAMDataset:
                     points = points[with_rgb_mask]
                     points_rgb = points_rgb[with_rgb_mask]
                     point_ts = point_ts[with_rgb_mask]
+                    point_lidar_idx = point_lidar_idx[with_rgb_mask]
                 
-                # Combine xyz with rgb: [x, y, z, r, g, b]
-                points_with_colors = np.hstack((points[:, :3], points_rgb[:, :3]))
-                frame_data["points"] = points_with_colors
+                # Combine xyz with rgb like IPBCar: [x, y, z, r, g, b]
+                points = np.hstack((points[:, :3], points_rgb[:, :3]))
                 
-                # Add image and depth data
+                # Add image data (skip depth like IPBCar)
                 img_dict = {self.main_cam_name: img}
-                depth_dict = {self.main_cam_name: depth_map}
                 frame_data["img"] = img_dict
-                frame_data["depth"] = depth_dict
             else:
-                # No matching image found, use default white colors
-                default_colors = np.ones((points.shape[0], 3), dtype=np.float64)
-                points_with_colors = np.hstack((points[:, :3], default_colors))
-                frame_data["points"] = points_with_colors
+                # No matching image found, keep original points format
+                pass
         else:
-            # No images available, just return points with intensity
-            frame_data["points"] = points  # [x, y, z, intensity]
+            # No images available, just return points as N,4 [x,y,z,1]
+            pass
             
+        frame_data.update({"points": points, "point_ts": point_ts, "point_lidar_idx": point_lidar_idx})
+        
         return frame_data
     
     def _find_closest_image(self, lidar_timestamp):
@@ -265,12 +266,12 @@ class AgriSLAMDataset:
         valid_mask = ~np.isnan(points).any(axis=1)
         points = points[valid_mask]
         
-        # Add intensity column (set to 1.0 for all points)
+        # Add homogeneous coordinate column (set to 1.0 for all points) to match IPBCar format
         if points.shape[1] == 3:
-            intensity = np.ones((points.shape[0], 1))
-            points = np.hstack([points, intensity])
+            homogeneous = np.ones((points.shape[0], 1))
+            points = np.hstack([points, homogeneous])
             
-        return points.astype(np.float64)  # N, 4 (x, y, z, intensity)
+        return points.astype(np.float64)  # N, 4 (x, y, z, 1)
     
     def read_img(self, img_file: str):
         """Read image file"""
@@ -279,10 +280,29 @@ class AgriSLAMDataset:
         return img
     
     @staticmethod
-    def get_timestamps(points):
-        """Get timestamps for points (uniform for Ouster)"""
+    def get_timestamps(points, scan_file_path=None):
+        """Get timestamps for points - parse from filename like IPBCar"""
         n_points = points.shape[0]
-        return np.zeros(n_points)  # Uniform timestamp for static scans
+        
+        if scan_file_path is not None:
+            # Extract timestamp from filename
+            filename = os.path.basename(scan_file_path)
+            timestamp_str = filename.replace('.ply', '')
+            
+            try:
+                # Parse format: 1744202088-061251861 -> seconds.nanoseconds
+                parts = timestamp_str.split('-')
+                if len(parts) == 2:
+                    seconds = int(parts[0])
+                    nanoseconds = int(parts[1])
+                    timestamp_sec = seconds + nanoseconds * 1e-9
+                    # Return per-point timestamps (all same for static scan)
+                    return np.full(n_points, timestamp_sec)
+            except:
+                pass
+        
+        # Fallback: uniform timestamp for static scans
+        return np.zeros(n_points)
     
     def get_frames_timestamps(self) -> np.ndarray:
         """Get timestamps for each frame"""

@@ -2,7 +2,10 @@ services:
   pings:
     build:
       context: .
-      ssh: ["default"]
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1001}
+      # ssh: ["default"]
     runtime: nvidia
     shm_size: '128gb'
     stdin_open: true # docker run -i
