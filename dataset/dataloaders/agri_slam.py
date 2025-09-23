@@ -30,15 +30,17 @@ import cv2
 import numpy as np
 import open3d as o3d
 from scipy.spatial.transform import Rotation as R
+from PIL import Image
 
 
 class AgriSLAMDataset:
     def __init__(self, data_dir, sequence: str = "train", *_, **__):
         
         self.contains_image = True
-        
+        self.use_sky_removal = True
+        # print(data_dir, sequence, "\n\n\n\n\n\n")
         # Hardcoded paths for agri-slam-data/train
-        self.agri_slam_dir = "/packages/pings/agri-slam-data/val"
+        self.agri_slam_dir = f"/packages/pings/agri-data/{data_dir}/"
         
         # Ouster LiDAR point cloud files
         self.ouster_dir = os.path.join(self.agri_slam_dir, "ouster/points/")
@@ -60,6 +62,15 @@ class AgriSLAMDataset:
             self.image_available = False
             self.load_img = False
         
+        # Build mask paths for sky removal if enabled
+        if self.use_sky_removal and self.image_available:
+            self.mask_paths = []
+            for img_file in self.img_files:
+                # Replace /rgb/ with /depth_anything/ and .jpg with .png
+                mask_path = img_file.replace('/rgb/', '/depth_anything/').replace('.jpg', '.png')
+                self.mask_paths.append(mask_path)
+            print(f"Sky removal enabled with depth threshold: 0")
+
         self.use_only_colorized_points = True
         
         # Load ground truth poses
@@ -97,7 +108,7 @@ class AgriSLAMDataset:
             [0.02179564, -0.02607131, 0.99942245, -0.40550301],
             [-0.75394360, 0.65608153, 0.03355697, -0.17441673],
             [0.00000000, 0.00000000, 0.00000000, 1.00000000]
-        ])
+        ])      
         
         # Store calibration in dictionaries expected by PINGS
         self.K_mats = {self.left_cam_name: K_cam}
@@ -122,7 +133,7 @@ class AgriSLAMDataset:
         )
         self.intrinsics_o3d = {self.left_cam_name: intrinsic}
         
-        self.deskew_off = True
+        self.deskew_off = False
         
         # Create timestamp mappings
         self._create_timestamp_mappings()
@@ -190,6 +201,11 @@ class AgriSLAMDataset:
             if closest_img_idx is not None:
                 img = self.read_img(self.img_files[closest_img_idx])
                 
+                # Apply sky removal if enabled
+                if self.use_sky_removal and hasattr(self, 'mask_paths'):
+                    mask_path = self.mask_paths[closest_img_idx]
+                    img = self.apply_sky_mask(img, mask_path)
+
                 # Create RGB colors for points (start with -1 like IPBCar)
                 points_rgb = -1.0 * np.ones_like(points)  # N,4, last channel for the mask
                 
@@ -251,6 +267,25 @@ class AgriSLAMDataset:
             # Fallback: return middle image if parsing fails
             return len(self.img_timestamps) // 2
     
+    def apply_sky_mask(self, image, mask_path):
+        """Apply sky removal using depth_anything masks"""
+        try:
+            # Load depth mask
+            depth_mask = np.array(Image.open(mask_path))
+            
+            # Create sky mask: pixels with depth == threshold (0) are sky
+            sky_mask = depth_mask == 0
+            
+            # Apply mask to image (set sky regions to black)
+            masked_image = image.copy()
+            masked_image[sky_mask] = [0, 0, 0]  # Set sky pixels to black
+            
+            return masked_image
+            
+        except Exception as e:
+            print(f"Warning: Failed to apply sky mask for {mask_path}: {e}")
+            return image  # Return original image if masking fails
+
     def __len__(self):
         return len(self.scan_files)
     

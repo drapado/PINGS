@@ -183,6 +183,7 @@ def inspect_pings_map(
     loaded_model = torch.load(model_path)
     neural_points = loaded_model["neural_points"] # neural_points config are also loaded
     neural_points.config = config
+    neural_points.to(config.device)  # Move all tensors to the correct device
     neural_points.temporal_local_map_on = False
     neural_points.compute_feature_principle_components(down_rate=31)
 

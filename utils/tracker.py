@@ -28,7 +28,7 @@ class Tracker:
     ):
 
         self.config = config
-        self.silence = config.silence
+        self.silence = False
         self.neural_points = neural_points
         self.sdf_mlp = decoders["sdf"]
         self.sem_mlp = decoders["semantic"]
@@ -78,11 +78,11 @@ class Tracker:
         max_valid_final_sdf_residual_cm = (
             self.config.surface_sample_range_m * 0.6 * 100.0
         )
-        min_valid_ratio = 0.1
+        min_valid_ratio = 0.05  # Reduced from 0.1 to be more permissive
 
         max_increment_sdf_residual_ratio = 1.1
         eigenvalue_ratio_thre = 0.005
-        min_valid_points = 30
+        min_valid_points = 10  # Reduced from 30 for agricultural datasets
         converged = False
         valid_flag = True
         last_sdf_residual_cm = 1e5
@@ -411,7 +411,12 @@ class Tracker:
         valid_points = points[valid_idx]
         valid_point_count = valid_points.shape[0]
 
-        if valid_point_count < 10:
+        if valid_point_count < 5:  # Very lenient fallback threshold
+            if not self.silence:
+                print(f"[bold yellow](Debug) Very few valid points: {valid_point_count}/{points.shape[0]}[/bold yellow]")
+                print(f"[bold yellow](Debug) Mask stats: {mask.sum().item()}/{mask.shape[0]}[/bold yellow]")
+                print(f"[bold yellow](Debug) Grad norm range: {sdf_grad.norm(dim=-1).min().item():.3f} - {sdf_grad.norm(dim=-1).max().item():.3f}[/bold yellow]")
+                print(f"[bold yellow](Debug) SDF std range: {sdf_std.min().item():.3f} - {sdf_std.max().item():.3f}[/bold yellow]")
             T = torch.eye(4, device=points.device, dtype=torch.float64)
             return T, None, None, None, valid_points, 0.0, 0.0
         if vis_weight_pc:
