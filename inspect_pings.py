@@ -21,6 +21,7 @@ import torch
 import torch.multiprocessing as mp
 from tqdm import tqdm
 from rich import print
+import cv2
 # import vdbfusion
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
@@ -69,7 +70,7 @@ $ python3 inspect_pings.py ./pings_experiments/your_experiment_path -m
 # Inspect the GS map along the trajectory with a interval of 2 frames
 $ python3 inspect_pings.py ./pings_experiments/your_experiment_path --range 0 2000 2
 
-# Inspect the GS map along the trajectory and render the video with an interval of 5 frames
+# Inspect the GS map along the trajectory and save individual frames with an interval of 5 frames
 $ python3 inspect_pings.py ./pings_experiments/your_experiment_path -v --range 0 1000 5
 
 """
@@ -85,7 +86,7 @@ def inspect_pings_map(
     log_on: bool = typer.Option(False, "--log-on", "-l", help='Turn on the logs printing'),
     eval_seq: bool = typer.Option(False, "--eval-seq", "-e", help='Do the evaluation on the input sequence'),
     use_free_view_camera: bool = typer.Option(False, "--use-free-view-camera", "-c", help='Render video with the recorded free view camera, input via -p'),
-    render_video: bool = typer.Option(False, "--render-video", "-v", help='Render and save video with pre-defined trajectory in the PINGS map'),
+    render_video: bool = typer.Option(False, "--render-video", "-v", help='Render and save individual frames with timestamps along pre-defined trajectory in the PINGS map'),
     recon_3d: bool = typer.Option(False, "--recon-3d", help='Reconstruct 3D by rendering the PINGS map'),
     show_mesh: bool = typer.Option(False, "--show-mesh", "-m", help='Show the mesh reconstructed from PINGS map'),
     show_global: bool = typer.Option(False, "--show-global", "-g", help='Show the global map instead of the local map (might cost a lot of memory and not very fast during inferencing)'),
@@ -402,9 +403,12 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
     background = torch.tensor(config.bg_color, dtype=config.dtype, device=config.device)
     bg_3d = background.view(3, 1, 1)
 
-    save_video_on = False
+    save_frames_on = False
     if video_save_base_path is not None:
-        save_video_on = True
+        save_frames_on = True
+        # Create subdirectories for different frame types
+        os.makedirs(os.path.join(video_save_base_path, "rgb"), 0o755, exist_ok=True)
+        os.makedirs(os.path.join(video_save_base_path, "normal"), 0o755, exist_ok=True)
 
     if eval_on and lpips_eval_on:
         lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg').to(config.device) 
@@ -421,10 +425,6 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
     #     vdb_volume = vdbfusion.VDBVolume(tsdf_fusion_voxel_size,
     #                                     sdf_trunc,
     #                                     space_carving_on)
-
-    rendered_rgb_cam_dict = {}
-    rendered_depth_cam_dict = {}
-    rendered_normal_cam_dict = {}
 
     intrinsic_o3d_cam_dict = {}
     extrinsic_o3d_cam_dict = {}
@@ -459,11 +459,6 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
     free_cam_K_mat[1,2] = free_cam_H // 2
 
     for cur_cam_name in cam_list: 
-        # initialize lists for video
-        rendered_rgb_cam_dict[cur_cam_name] = []
-        rendered_depth_cam_dict[cur_cam_name] = []
-        rendered_normal_cam_dict[cur_cam_name] = []
-
         # initialize o3d intrinsics and extrinsics
 
         cur_intrinsic_o3d = o3d.camera.PinholeCameraIntrinsic()
@@ -511,6 +506,12 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
         
         cur_frame_position_np = T_w_l_np[:3,3]
         cur_frame_position_torch = T_w_l[:3,3]
+        
+        # Extract timestamp for filename (use frame_id if no timestamp available)
+        if hasattr(dataset, 'cur_sensor_ts') and dataset.cur_sensor_ts is not None:
+            timestamp = dataset.cur_sensor_ts
+        else:
+            timestamp = frame_id
 
         if frame_id % 100 == 0:
             neural_points.recreate_hash(cur_frame_position_torch, kept_points=True, with_ts=False) # and at the same time reset local map
@@ -709,8 +710,11 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                 # rgb 
                 rendered_rgb_image = torch.clamp(rendered_rgb_image, 0, 1)
                 rendered_rgb_np = (rendered_rgb_image * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy().astype(np.uint8)  # value 0-255
-                if save_video_on:
-                    rendered_rgb_cam_dict[cur_cam_name].append(rendered_rgb_np)
+                if save_frames_on:
+                    # Save RGB frame with timestamp in filename
+                    rgb_filename = f"rgb_frame_{timestamp:010.6f}_{cur_cam_name}.png"
+                    rgb_save_path = os.path.join(video_save_base_path, "rgb", rgb_filename)
+                    cv2.imwrite(rgb_save_path, cv2.cvtColor(rendered_rgb_np, cv2.COLOR_RGB2BGR))
 
                 alpha_mask = None
                 if rendered_alpha is not None:
@@ -741,8 +745,11 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
                     
                     rendered_normal_np = (rendered_normal_show.permute(1,2,0).detach().cpu().numpy() * 255.0).astype(np.uint8) 
                     rendered_normal_np = np.ascontiguousarray(rendered_normal_np)
-                    if save_video_on:
-                        rendered_normal_cam_dict[cur_cam_name].append(rendered_normal_np)
+                    if save_frames_on:
+                        # Save normal frame with timestamp in filename
+                        normal_filename = f"normal_frame_{timestamp:010.6f}_{cur_cam_name}.png"
+                        normal_save_path = os.path.join(video_save_base_path, "normal", normal_filename)
+                        cv2.imwrite(normal_save_path, cv2.cvtColor(rendered_normal_np, cv2.COLOR_RGB2BGR))
 
                 if rendered_depth is not None and recon_3d_on:
                     
@@ -979,34 +986,13 @@ def render_with_poses(config: Config, dataset: SLAMDataset,
         vdb_volume = None
         mesh_tsdf_fusion = None
     
-    # save rendered videos along a pose sequence
-    if save_video_on:
-
-        dt = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-
-        for cur_cam_name in cam_list: 
-            cur_rendered_rgb_list = rendered_rgb_cam_dict[cur_cam_name]
-            # cur_rendered_depth_list = rendered_depth_cam_dict[cur_cam_name]
-            cur_rendered_normal_list = rendered_normal_cam_dict[cur_cam_name]
-
-            if len(cur_rendered_rgb_list) > 0:
-                cur_rgb_video_save_path = os.path.join(video_save_base_path, "rendered_rgb_{}_{}.mp4".format(cur_cam_name, dt))
-                save_video_np(cur_rendered_rgb_list, cur_rgb_video_save_path)
-
-            # if len(cur_rendered_depth_list) > 0:
-            #     cur_depth_video_save_path = os.path.join(video_save_base_path, "rendered_depth_{}_{}.mp4".format(cur_cam_name, dt))
-            #     save_video_np(cur_rendered_depth_list, cur_depth_video_save_path)
-
-            if len(cur_rendered_normal_list) > 0:    
-                cur_normal_video_save_path = os.path.join(video_save_base_path, "rendered_normal_{}_{}.mp4".format(cur_cam_name, dt))
-                save_video_np(cur_rendered_normal_list, cur_normal_video_save_path)
-
-            # free the lists
-            rendered_rgb_cam_dict[cur_cam_name] = []
-            # rendered_depth_cam_dict[cur_cam_name] = []
-            rendered_normal_cam_dict[cur_cam_name] = []
-
-    # NOTE: CPU memory might not be enough for all of these videos, maybe output it one by one
+    # Summary of saved frames
+    if save_frames_on:
+        frame_count_processed = (frame_end - frame_begin) // frame_step
+        print(f"Saved {frame_count_processed} individual frames to {video_save_base_path}")
+        print(f"RGB frames saved to: {os.path.join(video_save_base_path, 'rgb')}")
+        print(f"Normal frames saved to: {os.path.join(video_save_base_path, 'normal')}")
+        print(f"Frame filename format: [type]_frame_[timestamp]_[camera_name].png")
 
     
 if __name__ == "__main__":

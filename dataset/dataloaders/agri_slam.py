@@ -132,9 +132,7 @@ class AgriSLAMDataset:
             cy=K_cam[1,2]
         )
         self.intrinsics_o3d = {self.left_cam_name: intrinsic}
-        
-        self.deskew_off = False
-        
+                
         # Create timestamp mappings
         self._create_timestamp_mappings()
         

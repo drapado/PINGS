@@ -768,7 +768,7 @@ class SLAMDataset():
         else:
             self.consecutive_lose_track_frame = 0
 
-        if self.consecutive_lose_track_frame > 10:
+        if self.consecutive_lose_track_frame > 20:
             self.write_results() # record before the failure point
             sys.exit("Lose track for a long time, system failed") 
 

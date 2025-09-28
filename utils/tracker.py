@@ -175,6 +175,7 @@ class Tracker:
 
         if not self.silence:
             print("# Valid source point             :", valid_point_count)
+            print("# Valid point ratio              :", 1.0 * valid_point_count / source_point_count)
             print("Odometry residual (cm):", sdf_residual_cm)
             if photo_residual is not None:
                 print("Photometric residual:", photo_residual)
@@ -411,7 +412,7 @@ class Tracker:
         valid_points = points[valid_idx]
         valid_point_count = valid_points.shape[0]
 
-        if valid_point_count < 5:  # Very lenient fallback threshold
+        if valid_point_count < 10:  # Very lenient fallback threshold
             if not self.silence:
                 print(f"[bold yellow](Debug) Very few valid points: {valid_point_count}/{points.shape[0]}[/bold yellow]")
                 print(f"[bold yellow](Debug) Mask stats: {mask.sum().item()}/{mask.shape[0]}[/bold yellow]")

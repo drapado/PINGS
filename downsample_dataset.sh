@@ -5,16 +5,18 @@
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 <dataset_dir> <downsample_factor>"
+    echo "Usage: $0 <dataset_dir> <camera_downsample> [lidar_downsample]"
     echo ""
     echo "Arguments:"
-    echo "  dataset_dir      Path to dataset directory (e.g., agri-data/2d-apple_harvesting_train)"
-    echo "  downsample_factor Downsampling factor (must be > 1)"
+    echo "  dataset_dir        Path to dataset directory (e.g., agri-data/2d-apple_harvesting_train)"
+    echo "  camera_downsample  Downsampling factor for camera data (must be > 1)"
+    echo "  lidar_downsample   Downsampling factor for lidar data (optional, defaults to camera_downsample)"
     echo ""
-    echo "Example:"
-    echo "  $0 agri-data/2d-apple_harvesting_train 5"
+    echo "Examples:"
+    echo "  $0 agri-data/2d-apple_harvesting_train 5        # Both camera and lidar downsampled by 5"
+    echo "  $0 agri-data/2d-apple_harvesting_train 5 2      # Camera by 5, lidar by 2"
     echo ""
-    echo "This will create a downsampled dataset with name ending in '_5'"
+    echo "This will create a downsampled dataset with name ending in '_<camera>_<lidar>'"
     exit 1
 }
 
@@ -103,12 +105,13 @@ downsample_csv() {
 }
 
 # Check arguments
-if [ $# -ne 2 ]; then
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
     usage
 fi
 
 DATASET_DIR="$1"
-DOWNSAMPLE_FACTOR="$2"
+CAMERA_DOWNSAMPLE="$2"
+LIDAR_DOWNSAMPLE="${3:-$2}"  # Default to camera downsample if not provided
 
 # Validate inputs
 if [ ! -d "$DATASET_DIR" ]; then
@@ -116,18 +119,28 @@ if [ ! -d "$DATASET_DIR" ]; then
     exit 1
 fi
 
-if ! [[ "$DOWNSAMPLE_FACTOR" =~ ^[0-9]+$ ]] || [ "$DOWNSAMPLE_FACTOR" -lt 2 ]; then
-    echo "Error: Downsample factor must be an integer >= 2"
+if ! [[ "$CAMERA_DOWNSAMPLE" =~ ^[0-9]+$ ]] || [ "$CAMERA_DOWNSAMPLE" -lt 2 ]; then
+    echo "Error: Camera downsample factor must be an integer >= 2"
+    exit 1
+fi
+
+if ! [[ "$LIDAR_DOWNSAMPLE" =~ ^[0-9]+$ ]] || [ "$LIDAR_DOWNSAMPLE" -lt 2 ]; then
+    echo "Error: Lidar downsample factor must be an integer >= 2"
     exit 1
 fi
 
 # Extract base name for downsampled dataset
 DATASET_BASE=$(basename "$DATASET_DIR")
-DOWNSAMPLED_NAME="${DATASET_BASE}_${DOWNSAMPLE_FACTOR}"
+if [ "$CAMERA_DOWNSAMPLE" = "$LIDAR_DOWNSAMPLE" ]; then
+    DOWNSAMPLED_NAME="${DATASET_BASE}_${CAMERA_DOWNSAMPLE}"
+else
+    DOWNSAMPLED_NAME="${DATASET_BASE}_c${CAMERA_DOWNSAMPLE}_l${LIDAR_DOWNSAMPLE}"
+fi
 DOWNSAMPLED_DIR="$(dirname "$DATASET_DIR")/$DOWNSAMPLED_NAME"
 
 echo "Creating downsampled dataset: $DOWNSAMPLED_DIR"
-echo "Downsample factor: $DOWNSAMPLE_FACTOR"
+echo "Camera downsample factor: $CAMERA_DOWNSAMPLE"
+echo "Lidar downsample factor: $LIDAR_DOWNSAMPLE"
 
 # Remove existing downsampled directory if it exists
 if [ -d "$DOWNSAMPLED_DIR" ]; then
@@ -153,11 +166,11 @@ for subdir in "${SUBDIRS[@]}"; do
     dst_subdir="$DOWNSAMPLED_DIR/zed_multi/cam_2/$subdir"
     
     if [ -d "$src_subdir" ]; then
-        echo "  Processing $subdir..."
+        echo "  Processing $subdir (camera downsample: $CAMERA_DOWNSAMPLE)..."
         if [ "$subdir" = "point_cloud" ]; then
-            copied=$(copy_files_with_downsampling "$src_subdir" "$dst_subdir" "$DOWNSAMPLE_FACTOR")
+            copied=$(copy_files_with_downsampling "$src_subdir" "$dst_subdir" "$CAMERA_DOWNSAMPLE")
         else
-            copied=$(copy_images_with_downsampling "$src_subdir" "$dst_subdir" "$DOWNSAMPLE_FACTOR")
+            copied=$(copy_images_with_downsampling "$src_subdir" "$dst_subdir" "$CAMERA_DOWNSAMPLE")
         fi
         if [ "$subdir" = "rgb" ]; then
             total_images=$copied
@@ -171,7 +184,7 @@ ouster_src_dir="$DATASET_DIR/ouster"
 ouster_dst_dir="$DOWNSAMPLED_DIR/ouster"
 
 if [ -d "$ouster_src_dir" ]; then
-    echo "  Processing ouster data..."
+    echo "  Processing ouster data (lidar downsample: $LIDAR_DOWNSAMPLE)..."
     
     # Copy map.ply if it exists
     if [ -f "$ouster_src_dir/map.ply" ]; then
@@ -181,7 +194,7 @@ if [ -d "$ouster_src_dir" ]; then
     
     # Process points folder with downsampling
     if [ -d "$ouster_src_dir/points" ]; then
-        copied=$(copy_files_with_downsampling "$ouster_src_dir/points" "$ouster_dst_dir/points" "$DOWNSAMPLE_FACTOR")
+        copied=$(copy_files_with_downsampling "$ouster_src_dir/points" "$ouster_dst_dir/points" "$LIDAR_DOWNSAMPLE")
         echo "    Copied $copied point files from ouster/points"
     fi
 fi
@@ -189,16 +202,16 @@ fi
 echo ""
 echo "Processing CSV files..."
 
-# Process CSV files with downsampling
+# Copy CSV files without downsampling (preserve all data)
 if [ -f "$DATASET_DIR/groundtruth_cam_2.csv" ]; then
-    echo "  Processing camera CSV..."
-    downsample_csv "$DATASET_DIR/groundtruth_cam_2.csv" "$DOWNSAMPLED_DIR/groundtruth_cam_2.csv" "$DOWNSAMPLE_FACTOR"
+    echo "  Copying camera CSV (no downsampling)..."
+    cp "$DATASET_DIR/groundtruth_cam_2.csv" "$DOWNSAMPLED_DIR/groundtruth_cam_2.csv"
     echo "    Created: groundtruth_cam_2.csv"
 fi
 
 if [ -f "$DATASET_DIR/groundtruth_lidar.csv" ]; then
-    echo "  Processing lidar CSV..."
-    downsample_csv "$DATASET_DIR/groundtruth_lidar.csv" "$DOWNSAMPLED_DIR/groundtruth_lidar.csv" "$DOWNSAMPLE_FACTOR"
+    echo "  Copying lidar CSV (no downsampling)..."
+    cp "$DATASET_DIR/groundtruth_lidar.csv" "$DOWNSAMPLED_DIR/groundtruth_lidar.csv"
     echo "    Created: groundtruth_lidar.csv"
 fi
 
@@ -209,13 +222,14 @@ echo "=================================="
 echo "Original dataset: $DATASET_DIR"
 echo "Downsampled dataset: $DOWNSAMPLED_DIR"
 echo "Total images: $total_images"
-echo "Downsample factor: $DOWNSAMPLE_FACTOR"
+echo "Camera downsample factor: $CAMERA_DOWNSAMPLE"
+echo "Lidar downsample factor: $LIDAR_DOWNSAMPLE"
 echo ""
 echo "Files created:"
 if [ -f "$DOWNSAMPLED_DIR/groundtruth_cam_2.csv" ]; then
-    echo "  - groundtruth_cam_2.csv (downsampled camera poses)"
+    echo "  - groundtruth_cam_2.csv (complete camera poses - not downsampled)"
 fi
 if [ -f "$DOWNSAMPLED_DIR/groundtruth_lidar.csv" ]; then
-    echo "  - groundtruth_lidar.csv (downsampled lidar poses)"
+    echo "  - groundtruth_lidar.csv (complete lidar poses - not downsampled)"
 fi
 echo "=================================="
